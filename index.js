@@ -8,7 +8,7 @@ const rl = readline.createInterface({
     output: process.stdout
 });
 
-// Realistic commit messages
+// Commit messages
 const messages = [
     "feat: add new feature",
     "fix: resolve issue",
@@ -20,7 +20,7 @@ const messages = [
     "chore: cleanup"
 ];
 
-// Realistic tasks
+// Tasks
 const tasks = [
     "Improve UI",
     "Fix auth bug",
@@ -36,16 +36,15 @@ function randomItem(arr) {
     return arr[Math.floor(Math.random() * arr.length)];
 }
 
-// Delay
+// Sleep
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// 🎯 CUSTOM DATE FUNCTION
-function getCustomDate(dateStr) {
-    const date = new Date(dateStr);
+// Generate random time for a date
+function getRandomDateTime(baseDate) {
+    const date = new Date(baseDate);
 
-    // random time (natural look)
     date.setHours(
         Math.floor(Math.random() * 24),
         Math.floor(Math.random() * 60),
@@ -65,18 +64,17 @@ function ask(question, def) {
 }
 
 // Make commit
-function makeCommit(repoPath, useEmptyCommit, customDate) {
+function makeCommit(repoPath, useEmptyCommit, date) {
     const message = randomItem(messages);
-    const commitDate = getCustomDate(customDate);
+    const commitDate = getRandomDateTime(date);
 
     console.log(`📝 ${message} | 📅 ${commitDate}`);
 
     if (!useEmptyCommit) {
         const file = path.join(repoPath, "activity.txt");
-
         const content = `✔ ${randomItem(tasks)} - ${new Date().toISOString()}\n`;
-        fs.appendFileSync(file, content);
 
+        fs.appendFileSync(file, content);
         execSync("git add .", { cwd: repoPath, stdio: "inherit" });
     }
 
@@ -86,32 +84,53 @@ function makeCommit(repoPath, useEmptyCommit, customDate) {
     );
 }
 
+// Get all dates between range
+function getDateRange(startDate, endDate) {
+    const dates = [];
+    let current = new Date(startDate);
+    const last = new Date(endDate);
+
+    while (current <= last) {
+        dates.push(new Date(current));
+        current.setDate(current.getDate() + 1);
+    }
+
+    return dates;
+}
+
 // Main
 async function main() {
     console.log("=".repeat(50));
-    console.log("🚀 Custom Date Contribution Generator");
+    console.log("🚀 Date Range Contribution Generator");
     console.log("=".repeat(50));
 
-    const totalCommits = parseInt(await ask("Total commits", "20"));
     const repoPath = await ask("Repo path", ".");
-    const customDate = await ask("Enter date (YYYY-MM-DD)", "2025-01-01");
+    const startDate = await ask("Start date (YYYY-MM-DD)", "2025-01-01");
+    const endDate = await ask("End date (YYYY-MM-DD)", "2025-01-10");
     const useEmpty = (await ask("Empty commits? (yes/no)", "no")) === "yes";
+
+    const dates = getDateRange(startDate, endDate);
 
     console.log("\n⚡ Generating commits...\n");
 
-    for (let i = 0; i < totalCommits; i++) {
-        console.log(`➡️ Commit ${i + 1}/${totalCommits}`);
+    for (let d of dates) {
+        // 1 or 2 commits per day
+        const commitsToday = Math.floor(Math.random() * 2) + 1;
 
-        makeCommit(repoPath, useEmpty, customDate);
+        console.log(`📅 ${d.toISOString().split("T")[0]} → ${commitsToday} commits`);
 
-        // random delay (2–5 sec)
-        await sleep(Math.floor(Math.random() * 3000) + 2000);
+        for (let i = 0; i < commitsToday; i++) {
+            makeCommit(repoPath, useEmpty, d);
+
+            // small delay
+            await sleep(Math.floor(Math.random() * 2000) + 1000);
+        }
     }
 
     console.log("\n🚀 Pushing...");
     execSync("git push", { cwd: repoPath, stdio: "inherit" });
 
-    console.log("✅ Done! Check GitHub after 10–20 min 😎");
+    console.log("✅ Done! Check GitHub graph after some time 😎");
 
     rl.close();
 }
