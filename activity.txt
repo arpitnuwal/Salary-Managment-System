@@ -163,3 +163,4 @@
 ✔ Fix auth bug - 2026-04-21T11:58:12.278Z
 ✔ Add validation - 2026-04-21T11:58:15.829Z
 ✔ Update README - 2026-04-21T11:58:19.667Z
+✔ Refactor logic - 2026-04-21T11:58:22.127Z
