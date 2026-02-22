@@ -159,3 +159,4 @@
 ✔ Improve UI - 2026-04-21T11:57:59.106Z
 ✔ Improve UI - 2026-04-21T11:58:02.074Z
 ✔ Fix auth bug - 2026-04-21T11:58:04.816Z
+✔ Add validation - 2026-04-21T11:58:07.712Z
