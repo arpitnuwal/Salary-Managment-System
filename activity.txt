@@ -52,3 +52,4 @@
 ✔ Add validation - 2026-04-21T11:18:42.301Z
 ✔ Fix auth bug - 2026-04-21T11:18:46.824Z
 ✔ Optimize API - 2026-04-21T11:18:52.561Z
+✔ Update README - 2026-04-21T11:18:58.061Z
