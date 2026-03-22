@@ -28,3 +28,4 @@
 ✔ Add validation - 2026-04-21T11:16:59.587Z
 ✔ Enhance UX - 2026-04-21T11:17:04.906Z
 ✔ Fix auth bug - 2026-04-21T11:17:07.204Z
+✔ Update README - 2026-04-21T11:17:11.207Z
