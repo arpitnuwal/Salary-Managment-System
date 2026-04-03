@@ -1,0 +1,186 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+using System.Data;
+using System.Data.SqlClient;
+using System.Data.OleDb;
+using System.Configuration;
+using System.IO;
+using System.Globalization;
+
+public partial class addAttendance : System.Web.UI.Page
+{
+    protected void Page_Load(object sender, EventArgs e)
+    {
+        if (!IsPostBack)
+        {
+            BindMonth();
+            BindYear();
+        }
+    }
+
+    private void BindMonth()
+    {
+        ddlMonth.Items.Clear();
+        ddlMonth.Items.Add(new ListItem("Month", ""));
+
+        for (int i = 1; i <= 12; i++)
+        {
+            string monthName = System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetAbbreviatedMonthName(i);
+            ddlMonth.Items.Add(new ListItem(monthName, i.ToString()));
+        }
+    }
+
+
+
+
+    private void BindYear()
+    {
+        ddlYear.Items.Clear();
+        ddlYear.Items.Add(new ListItem("Year", ""));
+
+        int startYear = 2026;
+        int currentYear = DateTime.Now.Year;
+
+        for (int i = startYear; i <= currentYear; i++)
+        {
+            ddlYear.Items.Add(new ListItem(i.ToString(), i.ToString()));
+        }
+    }
+    protected void btnSave_Click(object sender, EventArgs e)
+    {
+     
+            if (!FileUpload1.HasFile)
+            {
+                Label1.Text = "Please select Excel file.";
+                return;
+            }
+
+            // Save file
+            string path = Server.MapPath("~/AttendanceUploads/" + FileUpload1.FileName);
+            FileUpload1.SaveAs(path);
+
+            // Excel connection
+            string excelCon ="Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + path +";Extended Properties='Excel 8.0;HDR=NO'";
+
+            DataTable dt = new DataTable();
+
+            using (OleDbConnection econ = new OleDbConnection(excelCon))
+            {
+                econ.Open();
+                OleDbDataAdapter da = new OleDbDataAdapter("SELECT * FROM [Sheet1$]", econ);
+                da.Fill(dt);
+            }
+
+            // SQL connection
+            SqlConnection sql = new SqlConnection("Data Source=mssql2017.adnshost.com,1533;Initial Catalog=testdb;User ID=testdb;Password=testdb@2575");
+
+            sql.Open();
+            SqlCommand cmddelete = new SqlCommand("delete  from Attendance   where   YEAR(rts) = " + ddlYear.SelectedValue + "   AND MONTH(rts) = " + ddlMonth.SelectedValue + "", sql);
+            cmddelete.ExecuteNonQuery();
+
+
+
+            string empCode = "";
+            string empName = "";
+
+            for (int i = 0; i < dt.Rows.Count; i++)
+            {
+                // DEBUG - show raw row data
+                string rowDebug = "";
+                for (int c = 0; c < dt.Columns.Count; c++)
+                {
+                    rowDebug += dt.Rows[i][c].ToString() + " | ";
+                }
+
+            //    Response.Write("<br><b>Row " + i + "</b> = " + rowDebug);
+
+                // Detect Empcode row
+
+                for (int c = 0; c < dt.Columns.Count; c++)
+                {
+                    string val = dt.Rows[i][c].ToString().Trim();
+
+                    if (val.Equals("Empcode", StringComparison.OrdinalIgnoreCase))
+                    {
+                        empCode = dt.Rows[i][c + 1].ToString().Trim();
+                        empName = dt.Rows[i][c + 3].ToString().Trim();
+
+                    
+                        //if (empCode != "")
+                        //{
+                        //    SqlCommand emp = new SqlCommand(
+                        //    "INSERT INTO Employees(EmpCode,EmpName) VALUES(@c,@n)", sql);
+
+                        //    emp.Parameters.AddWithValue("@c", empCode);
+                        //    emp.Parameters.AddWithValue("@n", empName);
+                        //    emp.ExecuteNonQuery();
+                        //}
+                    }
+                }
+
+               
+
+string dateCell = dt.Rows[i][0].ToString().Trim();
+
+DateTime d;
+double oa;
+
+if (double.TryParse(dateCell, out oa))
+{
+    // Excel numeric date handle
+    d = DateTime.FromOADate(oa);
+}
+else if (DateTime.TryParseExact(dateCell,
+        new string[] { "dd/MM/yyyy", "d/M/yyyy", "MM/dd/yyyy" },
+        CultureInfo.InvariantCulture,
+        DateTimeStyles.None,
+        out d))
+{
+    // Date parsed successfully
+}
+else
+{
+  //  Response.Write("<br>❌ Not Date Row " + i + " = " + dateCell);
+    continue;
+}
+                if (empCode == "")
+                    continue;
+
+                string shift = dt.Rows[i][1].ToString().Trim();
+                string inTime = dt.Rows[i][2].ToString().Trim();
+
+                string outTime = "";
+                string breakTime = "";
+
+                if (dt.Columns.Count > 17)
+                    outTime = dt.Rows[i][17].ToString().Trim();
+
+                if (dt.Columns.Count > 20)
+                    breakTime = dt.Rows[i][20].ToString().Trim();
+
+                SqlCommand cmd = new SqlCommand(
+                "INSERT INTO Attendance(EmpCode,AttDate,Shift,InTime,OutTime,BreakTime,rts) " +
+                "VALUES(@EmpCode,@Date,@Shift,@In,@Out,@Break,DATEADD(MONTH, 0, DATEFROMPARTS("+ddlYear.SelectedValue+", "+ddlMonth.SelectedValue+", 1)))", sql);
+
+                cmd.Parameters.AddWithValue("@EmpCode", empCode);
+                cmd.Parameters.AddWithValue("@Date", d);
+                cmd.Parameters.AddWithValue("@Shift", shift);
+                cmd.Parameters.AddWithValue("@In", inTime);
+                cmd.Parameters.AddWithValue("@Out", outTime);
+                cmd.Parameters.AddWithValue("@Break", breakTime);
+
+                cmd.ExecuteNonQuery();
+            }
+            
+
+            sql.Close();
+
+            Label1.Text = "Excel Import Successful";
+      
+    
+    }
+}

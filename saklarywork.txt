@@ -1,0 +1,207 @@
+﻿ protected void btnSalary_Click(object sender, EventArgs e)
+    {
+        pnlError.Visible = false;
+        if (ddlMonth.SelectedValue == "")
+        {
+            lblError.Text = "Select Month";
+
+            pnlError.Visible = true;
+            return;
+        
+        }
+
+        if (ddlYear.SelectedValue == "")
+        {
+            lblError.Text = "Select Year"; pnlError.Visible = true; return;
+
+        }
+
+        SqlConnection con = new SqlConnection("Data Source=mssql2017.adnshost.com,1533;Initial Catalog=testdb;User ID=testdb;Password=testdb@2575");
+
+        con.Open();
+
+        DataTable salaryTable = new DataTable();
+
+        salaryTable.Columns.Add("EmpCode");
+        salaryTable.Columns.Add("EmpName");
+        salaryTable.Columns.Add("Salary"); // NEW
+        salaryTable.Columns.Add("ESI"); // NEW
+        salaryTable.Columns.Add("SundayAmount"); // NEW
+        salaryTable.Columns.Add("Gender"); // NEW
+        salaryTable.Columns.Add("Advance"); // NEW
+        salaryTable.Columns.Add("ESICut"); // NEW
+        salaryTable.Columns.Add("DeductionDays");
+        salaryTable.Columns.Add("SundayWorked");
+        salaryTable.Columns.Add("Commission");
+        salaryTable.Columns.Add("FinalSalary");
+
+        SqlCommand empCmd = new SqlCommand("SELECT ID,empcode,empname,empsalary,esi,sundayamountgive,gender,rts,status,advanceamount FROM [emplist] ORDER BY id  DESC", con);
+        SqlDataReader empDr = empCmd.ExecuteReader();
+
+        List<dynamic> employees = new List<dynamic>();
+
+        while (empDr.Read())
+        {
+            employees.Add(new
+            {
+                EmpCode = empDr["empcode"].ToString(),
+                EmpName = empDr["empname"].ToString(),
+                Salary = Convert.ToDouble(empDr["empsalary"]),
+                ESI = empDr["esi"].ToString(),
+                SundayAmount =  empDr["sundayamountgive"].ToString(),
+                Gender = empDr["gender"].ToString(),
+                Advance = Convert.ToDouble(empDr["advanceamount"]),
+                SundayAllowed = empDr["sundayamountgive"].ToString()
+            });
+        }
+        empDr.Close();
+       
+
+        foreach (var emp in employees)
+        {
+            string empCode = emp.EmpCode;
+            string empName = emp.EmpName;
+
+            double monthlySalary = emp.Salary; // 🔥 Dynamic salary
+            double sundayRate = 500;
+            double advance = emp.Advance;
+
+            SqlCommand cmd = new SqlCommand("select * from Attendance where EmpCode=@EmpCode and  YEAR(rts) = " + ddlYear.SelectedValue + "   AND MONTH(rts) = " + ddlMonth.SelectedValue + ";", con);
+            cmd.Parameters.AddWithValue("@EmpCode", empCode);
+
+            SqlDataReader dr = cmd.ExecuteReader();
+
+            double totalDeductionDays = 0;
+            int sundayWorked = 0;
+            int daysInMonth = 30;
+
+           
+                while (dr.Read())
+                {
+                    double holiday = 0;
+
+                    DateTime attDate;
+                    DateTime.TryParse(dr["AttDate"].ToString(), out attDate);
+
+                    daysInMonth = DateTime.DaysInMonth(attDate.Year, attDate.Month);
+
+                    string intime = dr["InTime"].ToString();
+                    string outtime = dr["OutTime"].ToString();
+                    string breaktime = dr["BreakTime"].ToString();
+
+                    TimeSpan inTime, outTime, breakTime;
+
+                    bool inOk = TimeSpan.TryParse(intime, out inTime);
+                    bool outOk = TimeSpan.TryParse(outtime, out outTime);
+                    bool breakOk = TimeSpan.TryParse(breaktime, out breakTime);
+
+                    if (attDate.DayOfWeek == DayOfWeek.Sunday)
+                    {
+                        if (inOk)
+                            sundayWorked++;
+                    }
+                    else
+                    {
+                        // 🔥 NEW RULE: Break > 2 hours → NO CUT
+                        if (breakOk && breakTime > new TimeSpan(2, 0, 0))
+                        {
+                            holiday = 0; // no deduction
+                        }
+                        else
+                        {
+                            if (!inOk)
+                            {
+                                holiday = 1;
+                            }
+                            else
+                            {
+                                if (inTime >= new TimeSpan(10, 40, 0) && inTime <= new TimeSpan(12, 0, 0))
+                                    holiday += 0.25;
+
+                                if (inTime > new TimeSpan(12, 0, 0))
+                                    holiday += 0.5;
+
+                                if (outOk)
+                                {
+                                    if (outTime >= new TimeSpan(17, 30, 0))
+                                        holiday += 0.25;
+
+                                    if (outTime < new TimeSpan(17, 30, 0))
+                                        holiday += 0.5;
+                                }
+
+                                // OLD break logic (only if <= 2 hr)
+                                if (breakOk)
+                                {
+                                    if (breakTime > new TimeSpan(1, 30, 0))
+                                        holiday += 0.25;
+                                }
+                            }
+                        }
+                    }
+
+                    if (holiday > 1)
+                        holiday = 1;
+
+                    totalDeductionDays += holiday;
+                }
+
+            dr.Close();
+
+            // Commission
+            SqlCommand comCmd = new SqlCommand("SELECT ISNULL(SUM(CommissionAmount),0) FROM Commission WHERE EmpCode=@EmpCode and  YEAR(CreatedDate) = " + ddlYear.SelectedValue + "   AND MONTH(CreatedDate) = " + ddlMonth.SelectedValue + "", con);
+            comCmd.Parameters.AddWithValue("@EmpCode", empCode);
+
+            double commission = Convert.ToDouble(comCmd.ExecuteScalar());
+
+            double perDaySalary = monthlySalary / daysInMonth;
+            double deductionAmount = totalDeductionDays * perDaySalary;
+
+            double sundayBonus = sundayWorked * sundayRate;
+
+
+            if (emp.SundayAmount.ToString().ToLower() == "true" || emp.SundayAmount.ToString() == "1")
+            {
+                sundayBonus = sundayWorked * sundayRate;
+            }
+            else
+            {
+                sundayBonus = 0;
+            
+            }
+            double finalSalary = (monthlySalary - deductionAmount) + sundayBonus + commission;
+
+
+            double esiCut = 0;
+
+            // ESI check (True / Yes / 1 handle karne ke liye)
+            if (emp.ESI.ToString().ToLower() == "true" || emp.ESI.ToString() == "1")
+            {
+                esiCut = finalSalary * 0.25; // 0.25%
+                finalSalary = finalSalary - esiCut;
+            }
+
+            // 🔥 FINAL ADD (ALL COLUMNS)
+            salaryTable.Rows.Add(
+                empCode,
+                empName,
+                monthlySalary,
+                emp.ESI,
+                sundayBonus,
+                emp.Gender,
+                advance,
+                  esiCut, // NEW
+                totalDeductionDays,
+                sundayWorked,
+                commission,
+              
+                finalSalary
+            );
+        }
+      
+        lvEmployees.DataSource = salaryTable;
+        lvEmployees.DataBind();
+
+        con.Close();
+    }
+

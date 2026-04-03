@@ -1,0 +1,480 @@
+﻿<%@ Master Language="C#" AutoEventWireup="true" CodeFile="MasterPage.master.cs" Inherits="MasterPage" %>
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+   <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Employee Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+
+    <style>
+        /* ── Reset & Root ─────────────────────────────────────── */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --nav-h:        64px;
+            --footer-h:     52px;
+
+            --navy:         #1a1a3e;
+            --grad-nav:     linear-gradient(135deg, #1565C0 0%, #6a11cb 100%);
+            --grad-btn:     linear-gradient(135deg, #f7971e 0%, #f953c6 60%, #6a11cb 100%);
+            --grad-bg:      linear-gradient(135deg, #e8eaf6 0%, #f3e5f5 50%, #e3f2fd 100%);
+            --card:         #ffffff;
+            --card-shadow:  0 8px 40px rgba(101,17,203,0.10), 0 2px 8px rgba(0,0,0,0.06);
+            --accent:       #6a11cb;
+            --accent2:      #f953c6;
+            --text-dark:    #1a1a3e;
+            --text-mid:     #4a5568;
+            --text-muted:   #9aa3b2;
+            --input-border: #dde1f0;
+            --input-focus:  #6a11cb;
+            --row-alt:      #f5f3ff;
+            --row-hover:    #ede7f6;
+            --danger:       #e53e3e;
+            --success:      #38a169;
+            --radius:       16px;
+            --transition:   0.28s cubic-bezier(.4,0,.2,1);
+        }
+
+        html, body {
+            height: 100%;
+            font-family: 'Poppins', 'Segoe UI', sans-serif;
+            background: var(--grad-bg);
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+
+        /* ── Navbar ───────────────────────────────────────────── */
+        .navbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: var(--nav-h);
+            background: var(--grad-nav);
+            display: flex;
+            align-items: center;
+            padding: 0 28px;
+            z-index: 1000;
+            box-shadow: 0 4px 24px rgba(21,101,192,0.30);
+        }
+        .navbar::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 1px;
+            background: rgba(255,255,255,0.15);
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            flex: 1;
+        }
+        .nav-brand-icon {
+            width: 38px; height: 38px;
+            background: rgba(255,255,255,0.18);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 17px;
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.22);
+        }
+        .nav-brand-text {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: -0.3px;
+        }
+        .nav-brand-text span { font-weight: 300; opacity: 0.8; }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            list-style: none;
+        }
+        .nav-links li a {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 7px 15px;
+            border-radius: 8px;
+            font-size: 0.83rem;
+            font-weight: 500;
+            color: rgba(255,255,255,0.80);
+            text-decoration: none;
+            transition: background var(--transition), color var(--transition);
+        }
+        .nav-links li a:hover,
+        .nav-links li a.active {
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+        }
+        .nav-links li a i { font-size: 0.8rem; }
+
+        /* logout red tint on hover */
+        .nav-links li a.logout:hover { background: rgba(229,62,62,0.25); color: #ffc5c5; }
+
+        /* ── Page wrapper ─────────────────────────────────────── */
+        .page-wrapper {
+            padding-top: calc(var(--nav-h) + 28px);
+            padding-bottom: calc(var(--footer-h) + 24px);
+            min-height: 100vh;
+        }
+
+        /* ── Alert banner ─────────────────────────────────────── */
+        .alert-wrap { padding: 0 28px 12px; }
+        .alert {
+            border-radius: 10px;
+            padding: 11px 16px;
+            font-size: 0.84rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideDown 0.35s ease both;
+        }
+        @keyframes slideDown { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+        .alert-success { background: #f0fff4; border: 1px solid #9ae6b4; color: #276749; }
+        .alert-error   { background: #fff5f5; border: 1px solid #fc8181; color: #9b2c2c; }
+
+        /* ── Split layout ─────────────────────────────────────── */
+        .split {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            padding: 0 28px;
+            align-items: start;
+        }
+        @media (max-width: 900px) {
+            .split { grid-template-columns: 1fr; }
+        }
+
+        /* ── Card base ────────────────────────────────────────── */
+        .card {
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            animation: cardIn 0.5s cubic-bezier(.22,1,.36,1) both;
+        }
+        @keyframes cardIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+        .card-header {
+            background: var(--grad-nav);
+            padding: 18px 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .card-header-icon {
+            width: 34px; height: 34px;
+            background: rgba(255,255,255,0.18);
+            border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff;
+            font-size: 14px;
+        }
+        .card-header-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #fff;
+        }
+        .card-header-sub {
+            font-size: 0.74rem;
+            color: rgba(255,255,255,0.65);
+            font-weight: 300;
+        }
+        .card-body { padding: 26px 24px; }
+
+        /* ── Form fields ──────────────────────────────────────── */
+        .field { margin-bottom: 18px; }
+        .field label {
+            display: block;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-mid);
+            margin-bottom: 7px;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+        .input-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .input-icon {
+            position: absolute;
+            left: 13px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            pointer-events: none;
+            transition: color var(--transition);
+        }
+        .input-wrap:focus-within .input-icon { color: var(--accent); }
+
+        .input-wrap input[type="text"] {
+            width: 100%;
+            padding: 12px 14px 12px 38px;
+            border: 1.5px solid var(--input-border);
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            color: var(--text-dark);
+            background: #fafbff;
+            outline: none;
+            transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+        }
+        .input-wrap input:focus {
+            border-color: var(--input-focus);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(106,17,203,0.10);
+        }
+        .input-wrap input::placeholder { color: var(--text-muted); }
+
+        /* ── Buttons ──────────────────────────────────────────── */
+        .btn-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        .btn {
+            flex: 1;
+            padding: 13px 20px;
+            border: none;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: transform var(--transition), box-shadow var(--transition), filter var(--transition);
+            letter-spacing: 0.3px;
+        }
+        .btn-primary {
+            background: var(--grad-btn);
+            background-size: 200% 200%;
+            color: #fff;
+            box-shadow: 0 6px 20px rgba(249,83,198,0.35);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 28px rgba(249,83,198,0.50);
+            filter: brightness(1.05);
+        }
+        .btn-primary:active { transform: translateY(0); }
+
+        .btn-reset {
+            background: #f1f3f8;
+            color: var(--text-mid);
+            box-shadow: none;
+            border: 1.5px solid var(--input-border);
+            flex: 0 0 auto;
+            padding: 13px 18px;
+        }
+        .btn-reset:hover {
+            background: #e8eaf6;
+            color: var(--accent);
+            transform: translateY(-1px);
+        }
+
+        /* edit mode indicator */
+        .edit-mode-bar {
+            background: linear-gradient(90deg, #fff7e6, #fff0fb);
+            border: 1px solid #fbd38d;
+            border-radius: 8px;
+            padding: 8px 13px;
+            margin-bottom: 18px;
+            font-size: 0.8rem;
+            color: #b7791f;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* ── GridView Table ───────────────────────────────────── */
+        .grid-scroll { overflow-x: auto; }
+
+        .emp-grid {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.84rem;
+        }
+        .emp-grid thead tr {
+            background: var(--grad-nav);
+        }
+        .emp-grid thead th {
+            padding: 13px 14px;
+            text-align: left;
+            font-weight: 600;
+            color: rgba(255,255,255,0.90);
+            font-size: 0.76rem;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        .emp-grid thead th:first-child { border-radius: 0; }
+
+        .emp-grid tbody tr {
+            border-bottom: 1px solid #f0f2fa;
+            transition: background var(--transition);
+        }
+        .emp-grid tbody tr:nth-child(even) { background: var(--row-alt); }
+        .emp-grid tbody tr:hover { background: var(--row-hover); }
+
+        .emp-grid tbody td {
+            padding: 12px 14px;
+            color: var(--text-mid);
+            vertical-align: middle;
+        }
+
+        /* ID pill */
+        .id-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px; height: 28px;
+            background: linear-gradient(135deg, #e8eaf6, #d1c4e9);
+            border-radius: 50%;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        /* salary badge */
+        .salary-badge {
+            display: inline-block;
+            background: linear-gradient(90deg, #e8f5e9, #f3e5f5);
+            color: #2e7d32;
+            border-radius: 6px;
+            padding: 3px 9px;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+
+        /* action link buttons */
+        .btn-edit, .btn-delete {
+            width: 30px; height: 30px;
+            border: none;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 0.78rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform var(--transition), box-shadow var(--transition);
+            font-family: inherit;
+        }
+        .btn-edit   { background: #e8eaf6; color: var(--accent); }
+        .btn-delete { background: #fff5f5; color: var(--danger); margin-left: 5px; }
+        .btn-edit:hover   { background: var(--accent); color: #fff; transform: translateY(-1px); box-shadow: 0 3px 10px rgba(106,17,203,0.30); }
+        .btn-delete:hover { background: var(--danger); color: #fff; transform: translateY(-1px); box-shadow: 0 3px 10px rgba(229,62,62,0.30); }
+
+        /* empty state */
+        .empty-state {
+            text-align: center;
+            padding: 48px 20px;
+            color: var(--text-muted);
+        }
+        .empty-state i { font-size: 2.5rem; margin-bottom: 12px; display: block; opacity: 0.4; }
+        .empty-state p { font-size: 0.88rem; }
+
+        /* grid stats bar */
+        .grid-stats {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0 16px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        .stat-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: #f0f2ff;
+            color: var(--accent);
+            border-radius: 20px;
+            padding: 4px 10px;
+            font-weight: 600;
+            font-size: 0.78rem;
+        }
+
+        /* ── Footer ───────────────────────────────────────────── */
+        .footer {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            height: var(--footer-h);
+            background: var(--navy);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.78rem;
+            color: rgba(255,255,255,0.45);
+            letter-spacing: 0.2px;
+            z-index: 900;
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
+        .footer i { color: #f953c6; font-size: 0.7rem; }
+        .footer strong { color: rgba(255,255,255,0.70); font-weight: 600; }
+    </style>
+    <asp:ContentPlaceHolder id="head" runat="server">
+    </asp:ContentPlaceHolder>
+</head>
+<body>
+    <form id="form1" runat="server">
+   <nav class="navbar">
+        <a href="#" class="nav-brand">
+            <div class="nav-brand-icon"><i class="fa-solid fa-users-gear"></i></div>
+            <div>
+                <div class="nav-brand-text">Salary <span>Management System</span></div>
+            </div>
+        </a>
+        <ul class="nav-links">
+            <li><a href="#" ><i class="fa-solid fa-house"></i> Home</a></li>
+            <li><a href="Employeesadd.aspx"><i class="fa-solid fa-id-card"></i> Add Employees</a></li>
+
+             <li><a href="addAttendance.aspx"><i class="fa-solid fa-id-card"></i> Add Attendance</a></li>
+            
+             <li><a href="addcommission.aspx"><i class="fa-solid fa-id-card"></i> Add Commission</a></li>
+               <li><a href="SalaryReport.aspx"><i class="fa-solid fa-id-card"></i> Salary Report</a></li>
+
+               <li><a href="finalSalaryReport.aspx"><i class="fa-solid fa-id-card"></i>Final Salary Report</a></li>
+            <li><a href="Login.aspx" class="logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
+        </ul>
+    </nav>
+        <asp:ContentPlaceHolder id="ContentPlaceHolder1" runat="server">
+        
+        </asp:ContentPlaceHolder>
+    <footer class="footer">
+        <i class="fa-solid fa-copyright"></i>
+        2026 &nbsp;<strong>Salary Management System</strong>&nbsp; | Developed with
+        <i class="fa-solid fa-heart"></i> by SPMPL
+    </footer>
+
+    <script>
+        // Stagger form field entrance
+        document.querySelectorAll('.field, .btn-row').forEach(function (el, i) {
+            el.style.opacity = '0';
+            el.style.transform = 'translateX(-12px)';
+            el.style.transition = 'opacity 0.4s ease ' + (i * 0.06 + 0.15) + 's, transform 0.4s ease ' + (i * 0.06 + 0.15) + 's';
+            requestAnimationFrame(function () {
+                requestAnimationFrame(function () {
+                    el.style.opacity = '1';
+                    el.style.transform = 'translateX(0)';
+                });
+            });
+        });
+    </script>
+    </form>
+</body>
+</html>

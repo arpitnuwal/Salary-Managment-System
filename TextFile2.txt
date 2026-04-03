@@ -1,0 +1,127 @@
+﻿ protected void btnSave_Click(object sender, EventArgs e)
+{
+    try
+    {
+        SqlConnection newcon = new SqlConnection("Data Source=mssql2017.adnshost.com,1533;Initial Catalog=testdb;User ID=testdb;Password=testdb@2575");
+
+        newcon.Open();
+        SqlCommand cmddelete = new SqlCommand("delete  from Commission   where   YEAR(CreatedDate) = " + ddlYear.SelectedValue + "   AND MONTH(CreatedDate) = " + ddlMonth.SelectedValue + "", newcon);
+        cmddelete.ExecuteNonQuery();
+        newcon.Close();
+
+
+
+        // File Save
+        string path = Server.MapPath("~/commissionUpload/" + FileUpload1.FileName);
+        FileUpload1.SaveAs(path);
+
+        // Excel Connection
+        string excelConn = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + path +
+                           ";Extended Properties='Excel 12.0 Xml;HDR=YES'";
+
+        DataTable dt = new DataTable();
+
+        using (OleDbConnection excelConnection = new OleDbConnection(excelConn))
+        {
+            excelConnection.Open();
+
+            using (OleDbCommand cmd = new OleDbCommand("SELECT * FROM [Sheet1$]", excelConnection))
+            {
+                using (OleDbDataAdapter da = new OleDbDataAdapter(cmd))
+                {
+                    da.Fill(dt);
+                }
+            }
+        }
+
+
+
+
+        // SQL Connection
+        using (SqlConnection con = new SqlConnection("Data Source=mssql2017.adnshost.com,1533;Initial Catalog=testdb;User ID=testdb;Password=testdb@2575"))
+        {
+            con.Open();
+
+
+
+
+
+            foreach (DataRow row in dt.Rows)
+            {
+                // Type check
+             string type = row["Type"] != DBNull.Value ? row["Type"].ToString().Trim() : "";
+                if (string.IsNullOrEmpty(type))
+                    continue;
+
+                string narration = "";
+
+                if (dt.Columns.Contains("Commission"))
+                {
+                    narration = row["Commission"].ToString().Trim();
+                }
+                else if (dt.Columns.Contains("Commission "))
+                {
+                    narration = row["Commission "].ToString().Trim();
+                }
+                narration = narration.Replace("\r", "").Replace("\n", "").Replace(" ", "");
+
+             //   Response.Write("<br><br><br><br><br><br><br><br><br><br>Clean Narration: [" + narration + "]<br>");
+
+                if (string.IsNullOrEmpty(narration))
+                    continue;   
+
+                // Amount
+               decimal amount;
+if (!decimal.TryParse(row["Amount"] != DBNull.Value ? row["Amount"].ToString() : "0", out amount))
+    continue;
+
+                // Commission
+decimal commission = GetCommission(amount);
+
+
+// IMPORTANT FIX 👇
+string[] empcodes = narration.Split(',');
+
+List<string> cleanCodes = new List<string>();
+
+foreach (string code in empcodes)
+{
+    string c = code.Trim();
+
+    if (!string.IsNullOrEmpty(c))
+    {
+        cleanCodes.Add(c);
+    }
+}
+
+int count = cleanCodes.Count;
+
+if (count == 0)
+    continue;
+
+decimal dividedCommission = commission / count;
+
+// INSERT LOOP
+foreach (string code in cleanCodes)
+{
+    string empcode = code.PadLeft(4, '0');
+
+    SqlCommand sql = new SqlCommand(
+        "INSERT INTO Commission(EmpCode, Amount, CommissionAmount,CreatedDate) VALUES(@EmpCode, @Amount, @CommissionAmount,DATEADD(MONTH, 0, DATEFROMPARTS(" + ddlYear.SelectedValue + ", " + ddlMonth.SelectedValue + ", 1)))", con);
+
+    sql.Parameters.AddWithValue("@EmpCode", empcode);
+    sql.Parameters.AddWithValue("@Amount", amount);
+    sql.Parameters.AddWithValue("@CommissionAmount", dividedCommission);
+
+    sql.ExecuteNonQuery();
+}
+            }
+        }
+
+        Response.Write("✅ Commission Imported Successfully");
+    }
+    catch (Exception ex)
+    {
+        Response.Write("❌ Error: " + ex.Message);
+    }
+}
