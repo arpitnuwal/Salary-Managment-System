@@ -36,12 +36,12 @@ public partial class Employeesadd : System.Web.UI.Page
         
         if (id == 0)
         {
-            cmd.CommandText = "INSERT INTO [emplist](empcode,empname,empsalary,esi,sundayamountgive,gender,rts,status,advanceamount) VALUES('" + txtEmpCode.Text + "','" + txtEmpName.Text + "','" + txtEmpSalary.Text + "','"+esi+"','"+sundayamountgive+"','"+gender+"',getdate(),1,'"+txtadvance.Text+"')";
+            cmd.CommandText = "INSERT INTO [emplist](empcode,empname,empsalary,esi,sundayamountgive,gender,rts,status,advanceamount,emptype,bankname,bankifsc,bankaccount) VALUES('" + txtEmpCode.Text + "','" + txtEmpName.Text + "','" + txtEmpSalary.Text + "','"+esi+"','"+sundayamountgive+"','"+gender+"',getdate(),1,'"+txtadvance.Text+"','"+txtemptpye.Text+"','"+txtbankname.Text+"','"+txtifsc.Text+"','"+txtaccount.Text+"')";
         
 }
         else
         {
-            cmd.CommandText = "UPDATE emplist SET empcode='" + txtEmpCode.Text + "', EmpName='" + txtEmpName.Text + "', EmpSalary='" + txtEmpSalary.Text + "',esi='" + esi + "',sundayamountgive='" + sundayamountgive + "',gender='" + gender + "',advanceamount='" + txtadvance.Text + "' WHERE id=" + id + "";
+            cmd.CommandText = "UPDATE emplist SET emptype='"+txtemptpye.Text+"',bankname='"+txtbankname.Text+"',bankifsc='"+txtifsc.Text+"',bankaccount='"+txtaccount.Text+"', empcode='" + txtEmpCode.Text + "', EmpName='" + txtEmpName.Text + "', EmpSalary='" + txtEmpSalary.Text + "',esi='" + esi + "',sundayamountgive='" + sundayamountgive + "',gender='" + gender + "',advanceamount='" + txtadvance.Text + "' WHERE id=" + id + "";
         
         }
 
@@ -76,6 +76,18 @@ public partial class Employeesadd : System.Web.UI.Page
         {
             LblId.Value = ((HiddenField)e.Item.FindControl("HdnID")).Value;
             hdnEditID.Value = LblId.Value;
+
+
+
+            txtbankname.Text = ((Label)e.Item.FindControl("lblbankname")).Text;
+            txtemptpye.Text = ((Label)e.Item.FindControl("lblemptype")).Text;
+            txtifsc.Text = ((Label)e.Item.FindControl("lblbankifsc")).Text;
+            txtaccount.Text = ((Label)e.Item.FindControl("lblbankaccount")).Text;
+
+
+
+
+
             txtEmpCode.Text = ((Label)e.Item.FindControl("lblempcode")).Text;
             txtEmpName.Text = ((Label)e.Item.FindControl("lblempname")).Text;
             txtEmpSalary.Text = ((Label)e.Item.FindControl("lblempsalary")).Text;

@@ -48,7 +48,30 @@ public partial class _Default : System.Web.UI.Page
         }
     }
 
+    private bool IsAbsentDay(string empCode, DateTime checkDate)
+    {
+        using (SqlConnection con = new SqlConnection(
+            @"Data Source=mssql2017.adnshost.com,1533;Initial Catalog=testdb;User ID=testdb;Password=testdb@2575"))
+        {
+            con.Open();
 
+            SqlCommand cmd = new SqlCommand(
+                "SELECT COUNT(*) FROM Attendance " +
+                "WHERE EmpCode=@EmpCode " +
+                "AND CAST(AttDate AS DATE)=@Date " +
+                "AND InTime IS NOT NULL " +
+                "AND LTRIM(RTRIM(InTime)) <> '' " +
+                "AND LTRIM(RTRIM(InTime)) <> '--:--'",
+                con);
+
+            cmd.Parameters.AddWithValue("@EmpCode", empCode);
+            cmd.Parameters.AddWithValue("@Date", checkDate.Date);
+
+            int count = Convert.ToInt32(cmd.ExecuteScalar());
+
+            return count == 0;
+        }
+    }
 
     protected void btnSalary_Click(object sender, EventArgs e)
     { 
@@ -100,8 +123,8 @@ public partial class _Default : System.Web.UI.Page
         salaryTable.Columns.Add("month");
 
 
-
-        SqlCommand empCmd = new SqlCommand("SELECT ID,empcode,empname,empsalary,esi,sundayamountgive,gender,rts,status,advanceamount FROM [emplist]       ORDER BY id  DESC", con);
+        //where EmpCode='0007' 
+        SqlCommand empCmd = new SqlCommand("SELECT ID,empcode,empname,empsalary,esi,sundayamountgive,gender,rts,status,advanceamount FROM [emplist]      ORDER BY id  DESC", con);
         SqlDataReader empDr = empCmd.ExecuteReader();
 
         List<dynamic> employees = new List<dynamic>();
@@ -153,6 +176,9 @@ public partial class _Default : System.Web.UI.Page
                 DateTime attDate;
                 DateTime.TryParse(dr["AttDate"].ToString(), out attDate);
 
+                string intime = dr["InTime"].ToString();
+                string outtime = dr["OutTime"].ToString();
+                string breaktime = dr["BreakTime"].ToString();
 
 
                 // ===== FAST OFFICE CLOSED DAY CHECK =====
@@ -191,6 +217,43 @@ public partial class _Default : System.Web.UI.Page
                 // skip deduction
                 if (isOfficeClosedDay)
                 {
+                    DateTime prevDay = attDate.AddDays(-1);
+                    DateTime nextDay = attDate.AddDays(1);
+
+                    bool isPrevLeave = IsAbsentDay(empCode, prevDay);
+                    bool isNextLeave = IsAbsentDay(empCode, nextDay);
+
+                    bool isSandwichHoliday = isPrevLeave && isNextLeave;
+
+                    if (isSandwichHoliday)
+                    {
+                        holiday += 1;   // holiday day salary cut
+                        //yha dekhna he
+                        string inTimeValue = intime.ToString();
+                        string outTimeValue = outtime.ToString();
+                        string breakTimeValue = breaktime.ToString();
+                        using (SqlConnection conInsert = new SqlConnection(
+                            @"Data Source=mssql2017.adnshost.com,1533;Initial Catalog=testdb;User ID=testdb;Password=testdb@2575"))
+                        {
+                            conInsert.Open();
+
+                            SqlCommand cmdextra = new SqlCommand(
+                                "INSERT INTO AttendanceDeductionLog " +
+                                "(EmpCode, AttDate, InTime, OutTime, BreakTime, Deduction, DeductionType, Reason, CreatedOn) " +
+                                "VALUES ('" + empCode + "', '" + attDate + "', '" + inTimeValue + "', '" + outTimeValue + "', '" + breakTimeValue + "', '" + holiday + "', 'Full Day', 'SandwichHoliday  cut', DATEFROMPARTS("+ddlYear.SelectedValue+","+ddlMonth.SelectedValue+",1))",
+                                conInsert);
+
+                        
+                           
+                          
+
+                            cmdextra.ExecuteNonQuery();
+                        }
+
+
+                    }
+
+                    totalDeductionDays += holiday;
                     continue;
                 }
 
@@ -230,10 +293,7 @@ public partial class _Default : System.Web.UI.Page
 
             //    daysInMonth = DateTime.DaysInMonth(attDate.Year, attDate.Month);
 
-                string intime = dr["InTime"].ToString();
-                string outtime = dr["OutTime"].ToString();
-                string breaktime = dr["BreakTime"].ToString();
-
+                
                 TimeSpan inTime, outTime, breakTime;
 
                 bool inOk = TimeSpan.TryParse(intime, out inTime);
@@ -242,16 +302,70 @@ public partial class _Default : System.Web.UI.Page
 
                 bool isFemale = gender.ToUpper() == "F";
 
+
+
+                string sundayremark = "";
                 // Sunday rule
                 if (attDate.DayOfWeek == DayOfWeek.Sunday)
                 {
+
+
                     if (inOk)
                     {
-                        sundayWorked++;
+
+
+
+
+                     
 
                         string inTimeValue = inOk ? inTime.ToString() : "LEAVE";
                         string outTimeValue = outOk ? outTime.ToString() : "";
                         string breakTimeValue = breakOk ? breakTime.ToString() : "";
+
+
+
+                        DateTime prevDay = attDate.AddDays(-1); // Saturday
+                        DateTime nextDay = attDate.AddDays(1);  // Monday
+
+                        bool isPrevLeave = IsAbsentDay(empCode, prevDay);
+                        bool isNextLeave = IsAbsentDay(empCode, nextDay);
+
+                        bool isSandwichLeave = isPrevLeave && isNextLeave;
+
+                        if (isSandwichLeave)
+                        {
+                            sundayremark = "SandwichLeave Apply";
+                            // Sunday amount bhi cut
+                            holiday += 1;
+                        }
+
+                        else
+                        {
+
+
+                            TimeSpan minStayTime = new TimeSpan(14, 0, 0); // 2 PM
+                            TimeSpan maxAllowedTime = new TimeSpan(19, 0, 0); // 7 PM
+
+                            if (inOk && outOk)
+                            {
+                                if (outTime >= minStayTime && outTime <= maxAllowedTime)
+                                {
+                                    sundayWorked++;
+                                    // 2 PM ke baad aur 7 PM tak gaya = No cut
+                                }
+                                else if (outTime < minStayTime)
+                                {
+                                    sundayWorked++;
+                                    // 2 PM se pehle gaya = Half Day Cut
+                                    holiday += 0.50;
+                                }
+                            }
+                            else
+                            {
+                                // Agar aaya hi nahi
+                                holiday += 1;
+                            }
+                        }
 
                         using (SqlConnection conSunday = new SqlConnection(
                             @"Data Source=mssql2017.adnshost.com,1533;Initial Catalog=testdb;User ID=testdb;Password=testdb@2575"))
@@ -260,8 +374,8 @@ public partial class _Default : System.Web.UI.Page
 
                             SqlCommand cmdSunday = new SqlCommand(
                                 "INSERT INTO SundayAttendanceLog " +
-                                "(EmpCode, AttDate, InTime, OutTime, BreakTime, CreatedOn) " +
-                                "VALUES (@EmpCode, @AttDate, @InTime, @OutTime, @BreakTime, DATEFROMPARTS(@Year,@Month,1))",
+                                "(EmpCode, AttDate, InTime, OutTime, BreakTime, CreatedOn,remark) " +
+                                "VALUES (@EmpCode, @AttDate, @InTime, @OutTime, @BreakTime, DATEFROMPARTS(@Year,@Month,1),'" + sundayremark + "')",
                                 conSunday);
 
                             cmdSunday.Parameters.AddWithValue("@EmpCode", empCode);
@@ -280,7 +394,7 @@ public partial class _Default : System.Web.UI.Page
                         string inTimeValuesunday = inOk ? inTime.ToString() : "LEAVE";
                         string outTimeValuesunday = outOk ? outTime.ToString() : "";
                         string breakTimeValusundaye = breakOk ? breakTime.ToString() : "";
-
+                       
                         if (emp.SundayAmount.ToString().ToLower() == "true" || emp.SundayAmount.ToString() == "1")
                         {
 
@@ -289,6 +403,7 @@ public partial class _Default : System.Web.UI.Page
                         else
 
                         {
+                            sundayremark = "Sunday Leave";
                             using (SqlConnection conSunday = new SqlConnection(
                               @"Data Source=mssql2017.adnshost.com,1533;Initial Catalog=testdb;User ID=testdb;Password=testdb@2575"))
                             {
@@ -296,8 +411,8 @@ public partial class _Default : System.Web.UI.Page
 
                                 SqlCommand cmdSunday = new SqlCommand(
                                     "INSERT INTO SundayAttendanceLog " +
-                                    "(EmpCode, AttDate, InTime, OutTime, BreakTime, CreatedOn) " +
-                                    "VALUES (@EmpCode, @AttDate, @InTime, @OutTime, @BreakTime, DATEFROMPARTS(@Year,@Month,1))",
+                                    "(EmpCode, AttDate, InTime, OutTime, BreakTime, CreatedOn,sundayremark) " +
+                                    "VALUES (@EmpCode, @AttDate, @InTime, @OutTime, @BreakTime, DATEFROMPARTS(@Year,@Month,1),'" + sundayremark + "')",
                                     conSunday);
 
                                 cmdSunday.Parameters.AddWithValue("@EmpCode", empCode);
@@ -418,10 +533,17 @@ public partial class _Default : System.Web.UI.Page
                 TimeSpan finalLateLimit = new TimeSpan(10, 18, 0);
 
                 // Agar first punch fixed late time ke baad hai
-                if (firstPunchTime > finalLateLimit)
+                if (firstPunchTime >= finalLateLimit)
                 {
                     finalLateLimit = firstPunchTime.Add(new TimeSpan(0, 5, 0));
                 }
+
+                if (attDate.DayOfWeek == DayOfWeek.Sunday)
+                {
+                     finalLateLimit = new TimeSpan(11, 20, 0);
+                
+                }
+
 
                 if (inOk && inTime > finalLateLimit)
                 {
@@ -562,7 +684,7 @@ public partial class _Default : System.Web.UI.Page
             // ESI check (True / Yes / 1 handle karne ke liye)
             if (emp.ESI.ToString().ToLower() == "true" || emp.ESI.ToString() == "1")
             {
-                esiCut = finalSalary * 0.0025; // 0.25%
+                esiCut = finalSalary * 0.0075; // 0.25%
                 finalSalary = finalSalary - esiCut;
             }
 

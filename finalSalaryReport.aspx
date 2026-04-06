@@ -69,9 +69,13 @@
         <asp:DropDownList ID="ddlMonth" runat="server" CssClass="form-control"></asp:DropDownList>
 
 <asp:DropDownList ID="ddlYear" runat="server" CssClass="form-control"></asp:DropDownList>
+        <asp:TextBox ID="txtemptype" runat="server" CssClass="form-control" Text="1"></asp:TextBox>
 
         <asp:Button ID="btnSalary" runat="server" Text="Check Salary"
             CssClass="btn-modern" OnClick="btnSalary_Click" />
+
+         <asp:Button ID="Button1" runat="server" Text="Export Excel"
+            CssClass="btn-modern" OnClick="Button1_Click1" />
           
     </div>
         <asp:Label ID="lblMessage" runat="server"  ForeColor="Red"></asp:Label>
@@ -119,6 +123,10 @@
                                     <th>Ad. Amount</th>
                                     <th>Net Salary</th>
                                     <th>Due Advance.</th>
+                                    <th>EMP Type</th>
+                                    <th>Bank Name</th>
+                                    <th>IFSC</th>
+                                    <th>Account no.</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -178,6 +186,10 @@
         <td>
             <asp:Literal ID="litDueAdvance" runat="server" Text='<%# Eval("dueadvance") %>'></asp:Literal>
         </td>
+        <td><%# Eval("emptype") %></td>
+        <td><%# Eval("bankname") %></td>
+        <td><%# Eval("bankifsc") %></td>
+        <td><%# Eval("bankaccount") %></td>
     </tr>
 </ItemTemplate>
 

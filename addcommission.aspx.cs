@@ -158,14 +158,28 @@ protected void btnSave_Click(object sender, EventArgs e)
                 }
 
 
-
                 decimal amount;
 
                 if (!decimal.TryParse(row["Amount"] != DBNull.Value ? row["Amount"].ToString() : "0", out amount))
                     continue;
 
-                decimal commission = GetCommission(amount);
+               
 
+
+                decimal mrp;
+
+                if (!decimal.TryParse(row["Mrp"] != DBNull.Value ? row["Mrp"].ToString() : "0", out mrp))
+                    continue;
+                decimal commission = GetCommission(mrp);
+
+                decimal qty;
+
+                if (!decimal.TryParse(row["Qty"] != DBNull.Value ? row["Qty"].ToString() : "0", out qty))
+                    continue;
+              
+                decimal totalcommission = commission * qty;
+
+               
                 string[] empcodes = narration.Split(',');
 
                 List<string> cleanCodes = new List<string>();
@@ -183,15 +197,15 @@ protected void btnSave_Click(object sender, EventArgs e)
                 if (count == 0)
                     continue;
 
-                decimal dividedCommission = commission / count;
+                decimal dividedCommission = totalcommission / count;
 
                 foreach (string code in cleanCodes)
                 {
                     string empcode = code.PadLeft(4, '0');
 
                     SqlCommand sql = new SqlCommand(
-                        "INSERT INTO Commission(EmpCode, Amount, CommissionAmount,CommissionDate, CreatedDate) " +
-                        "VALUES(@EmpCode, @Amount, @CommissionAmount,'" + createdDate + "', DATEFROMPARTS(@Year,@Month,1))",
+                        "INSERT INTO Commission(EmpCode, Amount, CommissionAmount,CommissionDate, CreatedDate,sinleamount) " +
+                        "VALUES(@EmpCode, @Amount, @CommissionAmount,'" + createdDate + "', DATEFROMPARTS(@Year,@Month,1),'" + mrp + "')",
                         con);
 
                     sql.Parameters.AddWithValue("@EmpCode", empcode);
@@ -259,6 +273,30 @@ public decimal GetCommission(decimal amount)
         commission = 19;
     else if (absAmount <= 20000)
         commission = 20;
+
+    else if (absAmount <= 21000)
+        commission = 21;
+
+
+    else if (absAmount <= 22000)
+        commission = 22;
+
+    else if (absAmount <= 23000)
+        commission = 23;
+
+    else if (absAmount <= 24000)
+        commission = 24;
+
+    else if (absAmount <= 25000)
+        commission = 25;
+
+    else if (absAmount <= 26000)
+        commission = 26;
+
+    else if (absAmount <= 27000)
+        commission = 27;
+    else if (absAmount <= 28000)
+        commission = 28;
 
     return amount < 0 ? -commission : commission;
 }

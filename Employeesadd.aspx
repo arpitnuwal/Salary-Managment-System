@@ -127,6 +127,62 @@
                             
                          
                         </div>
+
+                           <div class="field">
+                            <label for="txtEmpSalary">EMP Type</label>
+                            <div class="input-wrap">
+                                <i class="fa-solid fa-indian-rupee-sign input-icon"></i>
+                                <asp:TextBox ID="txtemptpye"
+                                             runat="server"
+                                             placeholder="e.g. 1"
+                                             MaxLength="15" Text="0"
+                                           />
+                            </div>
+                            
+                         
+                        </div>
+
+                          <div class="field">
+                            <label for="txtEmpSalary">Bank Name</label>
+                            <div class="input-wrap">
+                                <i class="fa-solid fa-indian-rupee-sign input-icon"></i>
+                                <asp:TextBox ID="txtbankname"
+                                             runat="server"
+                                             placeholder="e.g. BOB"
+                                             MaxLength="15" Text="0"
+                                           />
+                            </div>
+                            
+                         
+                        </div>
+
+                          <div class="field">
+                            <label for="txtEmpSalary">Bank IFSC</label>
+                            <div class="input-wrap">
+                                <i class="fa-solid fa-indian-rupee-sign input-icon"></i>
+                                <asp:TextBox ID="txtifsc"
+                                             runat="server"
+                                             placeholder="e.g. 12346"
+                                             MaxLength="15" Text="0"
+                                           />
+                            </div>
+                            
+                         
+                        </div>
+
+                         <div class="field">
+                            <label for="txtEmpSalary">Bank Acoount no</label>
+                            <div class="input-wrap">
+                                <i class="fa-solid fa-indian-rupee-sign input-icon"></i>
+                                <asp:TextBox ID="txtaccount"
+                                             runat="server"
+                                             placeholder="e.g. 12121212121"
+                                             MaxLength="15" Text="0"
+                                           />
+                            </div>
+                            
+                         
+                        </div>
                         <%-- Buttons --%>
                         <div class="btn-row">
                             <asp:Button ID="btnSave"
@@ -192,7 +248,15 @@
                     <asp:Label ID="lbgender" runat="server" Text='<%# Eval("gender") %>' Visible="false"></asp:Label>
                     <asp:Label ID="lbladvanceamount" runat="server" Text='<%# Eval("advanceamount") %>' Visible="false"></asp:Label>
         
+                 <asp:Label ID="lblemptype" runat="server" Text='<%# Eval("emptype") %>' Visible="false"></asp:Label>
+        
+                 <asp:Label ID="lblbankname" runat="server" Text='<%# Eval("bankname") %>' Visible="false"></asp:Label>
+        
+                 <asp:Label ID="lblbankifsc" runat="server" Text='<%# Eval("bankifsc") %>' Visible="false"></asp:Label>
+        
+                 <asp:Label ID="lblbankaccount" runat="server" Text='<%# Eval("bankaccount") %>' Visible="false"></asp:Label>
 
+        
 
 
                 <td><%# Container.DataItemIndex + 1 %></td>

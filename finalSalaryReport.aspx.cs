@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
+using System.IO;
 using System.Linq;
 using System.Web;
 using System.Web.UI;
@@ -53,7 +54,8 @@ public partial class finalSalaryReport : System.Web.UI.Page
     private void LoadData()
     {
         SqlConnection con = new SqlConnection(connStr);
-        SqlDataAdapter da = new SqlDataAdapter("select a.*,"+ddlMonth.SelectedValue+" as month from finalsalaryreport   as a  where a.reportmonth='" + ddlMonth.SelectedItem + "' and	a.reportyear='" + ddlYear.SelectedItem + "'", con);
+       string sqlq = "select a.*," + ddlMonth.SelectedValue + " as month,(select emptype from emplist where empcode=a.empcode) as emptype,(select bankname from emplist where empcode=a.empcode) as bankname,(select bankifsc from emplist where empcode=a.empcode) as bankifsc,(select bankaccount from emplist where empcode=a.empcode) as bankaccount from finalsalaryreport   as a  where a.reportmonth='" + ddlMonth.SelectedItem + "' and	a.reportyear='" + ddlYear.SelectedItem + "' and a.empcode in (select empcode from  emplist where emptype='" + txtemptype.Text + "')";
+       SqlDataAdapter da = new SqlDataAdapter(sqlq, con);
         DataTable dt = new DataTable();
         da.Fill(dt);
 
@@ -140,5 +142,46 @@ public partial class finalSalaryReport : System.Web.UI.Page
     protected void btnSalary_Click(object sender, EventArgs e)
     {
         LoadData();
+    }
+    protected void Button1_Click1(object sender, EventArgs e)
+    {
+        using (SqlConnection con = new SqlConnection(connStr))
+        {
+            string sqlq = @"SELECT a.*,
+                        '" + ddlMonth.SelectedValue + @"' AS Month,
+                        (SELECT emptype FROM emplist WHERE empcode=a.empcode) AS emptype,
+                        (SELECT bankname FROM emplist WHERE empcode=a.empcode) AS bankname,
+                        (SELECT bankifsc FROM emplist WHERE empcode=a.empcode) AS bankifsc,
+                        (SELECT bankaccount FROM emplist WHERE empcode=a.empcode) AS bankaccount
+                        FROM finalsalaryreport AS a
+                        WHERE a.reportmonth='" + ddlMonth.SelectedItem.Text + @"'
+                        AND a.reportyear='" + ddlYear.SelectedItem.Text + @"'
+                        AND a.empcode IN
+                        (SELECT empcode FROM emplist WHERE emptype='" + txtemptype.Text.Trim() + "')";
+
+            SqlDataAdapter da = new SqlDataAdapter(sqlq, con);
+            DataTable dt = new DataTable();
+            da.Fill(dt);
+
+            GridView gv = new GridView();
+            gv.DataSource = dt;
+            gv.DataBind();
+
+            Response.Clear();
+            Response.Buffer = true;
+            Response.AddHeader("content-disposition", "attachment;filename=SalaryReport.xls");
+            Response.Charset = "";
+            Response.ContentType = "application/vnd.ms-excel";
+
+            StringWriter sw = new StringWriter();
+            HtmlTextWriter hw = new HtmlTextWriter(sw);
+
+            gv.RenderControl(hw);
+
+            Response.Output.Write(sw.ToString());
+            Response.Flush();
+            Response.End();
+        }
+
     }
 }
