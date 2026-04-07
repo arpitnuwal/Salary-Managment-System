@@ -175,7 +175,7 @@
             <asp:Literal ID="litGrossSalary" runat="server" Text='<%# Math.Round(Convert.ToDouble(Eval("grosssalary"))) %>'></asp:Literal>
         </td>
         <td>
-            <asp:Literal ID="litCommission" runat="server" Text='<%# Math.Round(Convert.ToDouble(Eval("Commission"))) %>'></asp:Literal>
+            <asp:Literal ID="litCommission" runat="server" Text='<%# Math.Round(Convert.ToDouble(Eval("Commission"))) %>'></asp:Literal><a href="commsioncutreport.aspx?EmpCode=<%# Eval("EmpCode") %>&&year=<%# Eval("year") %>&&month=<%# Eval("month") %>">check</a>
         </td>
         <td>
        <%# Math.Round(Convert.ToDouble(Eval("advanceamountcut"))) %>

@@ -54,7 +54,7 @@ public partial class finalSalaryReport : System.Web.UI.Page
     private void LoadData()
     {
         SqlConnection con = new SqlConnection(connStr);
-       string sqlq = "select a.*," + ddlMonth.SelectedValue + " as month,(select emptype from emplist where empcode=a.empcode) as emptype,(select bankname from emplist where empcode=a.empcode) as bankname,(select bankifsc from emplist where empcode=a.empcode) as bankifsc,(select bankaccount from emplist where empcode=a.empcode) as bankaccount from finalsalaryreport   as a  where a.reportmonth='" + ddlMonth.SelectedItem + "' and	a.reportyear='" + ddlYear.SelectedItem + "' and a.empcode in (select empcode from  emplist where emptype='" + txtemptype.Text + "')";
+        string sqlq = "select a.*," + ddlMonth.SelectedValue + " as month," + ddlYear.SelectedValue + " as year,(select emptype from emplist where empcode=a.empcode) as emptype,(select bankname from emplist where empcode=a.empcode) as bankname,(select bankifsc from emplist where empcode=a.empcode) as bankifsc,(select bankaccount from emplist where empcode=a.empcode) as bankaccount from finalsalaryreport   as a  where a.reportmonth='" + ddlMonth.SelectedItem + "' and	a.reportyear='" + ddlYear.SelectedItem + "' and a.empcode in (select empcode from  emplist where emptype='" + txtemptype.Text + "')";
        SqlDataAdapter da = new SqlDataAdapter(sqlq, con);
         DataTable dt = new DataTable();
         da.Fill(dt);

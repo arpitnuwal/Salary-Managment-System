@@ -177,7 +177,7 @@
                                 <asp:TextBox ID="txtaccount"
                                              runat="server"
                                              placeholder="e.g. 12121212121"
-                                             MaxLength="15" Text="0"
+                                             Text="0"
                                            />
                             </div>
                             

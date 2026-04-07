@@ -124,7 +124,7 @@ public partial class _Default : System.Web.UI.Page
 
 
         //where EmpCode='0007' 
-        SqlCommand empCmd = new SqlCommand("SELECT ID,empcode,empname,empsalary,esi,sundayamountgive,gender,rts,status,advanceamount FROM [emplist]      ORDER BY id  DESC", con);
+        SqlCommand empCmd = new SqlCommand("SELECT ID,empcode,empname,empsalary,esi,sundayamountgive,gender,rts,status,advanceamount FROM [emplist]  where EmpCode='0011'     ORDER BY id  DESC", con);
         SqlDataReader empDr = empCmd.ExecuteReader();
 
         List<dynamic> employees = new List<dynamic>();
@@ -264,7 +264,7 @@ public partial class _Default : System.Web.UI.Page
                     conMin.Open();
 
                     SqlCommand cmdMin = new SqlCommand(
-                        "SELECT MIN(InTime) FROM Attendance WHERE CAST(AttDate AS DATE)=@Date AND InTime IS NOT NULL",
+                        "SELECT MIN(InTime) FROM Attendance WHERE CAST(  AS DATE)=@Date AND InTime IS NOT NULL",
                         conMin);
 
                     cmdMin.Parameters.AddWithValue("@Date", attDate.Date);
@@ -302,7 +302,7 @@ public partial class _Default : System.Web.UI.Page
 
                 bool isFemale = gender.ToUpper() == "F";
 
-
+                string gggg = chkdate;
 
                 string sundayremark = "";
                 // Sunday rule
@@ -343,26 +343,31 @@ public partial class _Default : System.Web.UI.Page
                         {
 
 
-                            TimeSpan minStayTime = new TimeSpan(14, 0, 0); // 2 PM
-                            TimeSpan maxAllowedTime = new TimeSpan(19, 0, 0); // 7 PM
+                            TimeSpan halfDayTime = new TimeSpan(14, 0, 0); // 2 PM
+                            TimeSpan noCutTime = new TimeSpan(19, 0, 0);   // 7 PM
 
                             if (inOk && outOk)
                             {
-                                if (outTime >= minStayTime && outTime <= maxAllowedTime)
+                                sundayWorked++;
+
+                                if (outTime < halfDayTime)
                                 {
-                                    sundayWorked++;
-                                    // 2 PM ke baad aur 7 PM tak gaya = No cut
+                                    // 2 PM se pehle gaya = Full cut
+                                    holiday += 1;
                                 }
-                                else if (outTime < minStayTime)
+                                else if (outTime >= halfDayTime && outTime < noCutTime)
                                 {
-                                    sundayWorked++;
-                                    // 2 PM se pehle gaya = Half Day Cut
+                                    // 2 PM ke baad aur 7 PM se pehle = Half cut
                                     holiday += 0.50;
+                                }
+                                else
+                                {
+                                    // 7 PM ya uske baad = No cut
                                 }
                             }
                             else
                             {
-                                // Agar aaya hi nahi
+                                // Aaya hi nahi = Full cut
                                 holiday += 1;
                             }
                         }
@@ -411,7 +416,7 @@ public partial class _Default : System.Web.UI.Page
 
                                 SqlCommand cmdSunday = new SqlCommand(
                                     "INSERT INTO SundayAttendanceLog " +
-                                    "(EmpCode, AttDate, InTime, OutTime, BreakTime, CreatedOn,sundayremark) " +
+                                    "(EmpCode, AttDate, InTime, OutTime, BreakTime, CreatedOn,remark) " +
                                     "VALUES (@EmpCode, @AttDate, @InTime, @OutTime, @BreakTime, DATEFROMPARTS(@Year,@Month,1),'" + sundayremark + "')",
                                     conSunday);
 
@@ -665,7 +670,7 @@ public partial class _Default : System.Web.UI.Page
          //   double deductionAmount = 0;
          double deductionAmount = totalDeductionDays * perDaySalary;
             double sundayBonus = sundayWorked * sundayRate;
-            Label1.Text="deductionAmount :" + deductionAmount + " and  monthlySalary: " + monthlySalary + "  sundayBonus: " + sundayBonus + "   perDaySalary : " + perDaySalary + " totalDeductionDays: " + totalDeductionDays + "";
+           // Label1.Text="deductionAmount :" + deductionAmount + " and  monthlySalary: " + monthlySalary + "  sundayBonus: " + sundayBonus + "   perDaySalary : " + perDaySalary + " totalDeductionDays: " + totalDeductionDays + "";
 
             if (emp.SundayAmount.ToString().ToLower() == "true" || emp.SundayAmount.ToString() == "1")
             {
