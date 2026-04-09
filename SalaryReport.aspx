@@ -69,7 +69,7 @@
         <asp:DropDownList ID="ddlMonth" runat="server" CssClass="form-control"></asp:DropDownList>
 
 <asp:DropDownList ID="ddlYear" runat="server" CssClass="form-control"></asp:DropDownList>
-
+              <asp:TextBox ID="txtempid" runat="server" CssClass="form-control" Text=""></asp:TextBox>
         <asp:Button ID="btnSalary" runat="server" Text="Calculate Salary"
             CssClass="btn-modern" OnClick="btnSalary_Click" />
            <asp:Button ID="Button1" runat="server" Text="Create Final Report"

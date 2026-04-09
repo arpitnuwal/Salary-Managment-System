@@ -91,10 +91,17 @@ public partial class _Default : System.Web.UI.Page
 
         }
 
+        string empid = "",empid2 = "";
+        if (txtempid.Text != "")
+        {
+            empid = "and empcode in (" + txtempid.Text + ")";
+            empid2 = "and emcode in (" + txtempid.Text + ")";
+
+        }
         SqlConnection con = new SqlConnection("Data Source=mssql2017.adnshost.com,1533;Initial Catalog=testdb;User ID=testdb;Password=testdb@2575");
 
         con.Open();
-        SqlCommand cmddelete = new SqlCommand("delete  from AttendanceDeductionLog   where   YEAR(CreatedOn) = " + ddlYear.SelectedValue + "   AND MONTH(CreatedOn) = " + ddlMonth.SelectedValue + ";delete  from commsioncut   where   YEAR(CreatedOn) = " + ddlYear.SelectedValue + "   AND MONTH(CreatedOn) = " + ddlMonth.SelectedValue + ";delete  from SundayAttendanceLog   where   YEAR(CreatedOn) = " + ddlYear.SelectedValue + "   AND MONTH(CreatedOn) = " + ddlMonth.SelectedValue + "", con);
+        SqlCommand cmddelete = new SqlCommand("delete  from AttendanceDeductionLog   where   YEAR(CreatedOn) = " + ddlYear.SelectedValue + "   AND MONTH(CreatedOn) = " + ddlMonth.SelectedValue + " " + empid + ";delete  from commsioncut   where   YEAR(CreatedOn) = " + ddlYear.SelectedValue + "   AND MONTH(CreatedOn) = " + ddlMonth.SelectedValue + " " + empid2 + ";delete  from SundayAttendanceLog   where   YEAR(CreatedOn) = " + ddlYear.SelectedValue + "   AND MONTH(CreatedOn) = " + ddlMonth.SelectedValue + " " + empid + "", con);
         cmddelete.ExecuteNonQuery();
 
 
@@ -125,7 +132,7 @@ public partial class _Default : System.Web.UI.Page
         salaryTable.Columns.Add("basicsalary");
 
         //where EmpCode='0007' 
-        SqlCommand empCmd = new SqlCommand("SELECT emptype,ID,empcode,empname,empsalary,esi,sundayamountgive,gender,rts,status,advanceamount FROM [emplist]       ORDER BY id  DESC", con);
+        SqlCommand empCmd = new SqlCommand("SELECT emptype,ID,empcode,empname,empsalary,esi,sundayamountgive,gender,rts,status,advanceamount FROM [emplist]  where 1=1   " + empid + "    ORDER BY id  DESC", con);
         SqlDataReader empDr = empCmd.ExecuteReader();
         //  
         List<dynamic> employees = new List<dynamic>();
@@ -147,7 +154,7 @@ public partial class _Default : System.Web.UI.Page
         }
         empDr.Close();
         Dictionary<DateTime, bool> officeClosedDayCache = new Dictionary<DateTime, bool>();
-
+       // ट्रेन में जोम्बी का आतंक 
         foreach (var emp in employees)
         {
             string empCode = emp.EmpCode;
@@ -747,8 +754,8 @@ public partial class _Default : System.Web.UI.Page
 
 
             con.Open();
-            SqlCommand cmddelete = new SqlCommand("delete  from finalsalaryreport   where reportmonth='"+monthName+"' and	reportyear='"+year+"'", con);
-            cmddelete.ExecuteNonQuery();
+            //SqlCommand cmddelete = new SqlCommand("delete  from finalsalaryreport   where reportmonth='"+monthName+"' and	reportyear='"+year+"'", con);
+            //cmddelete.ExecuteNonQuery();
 
 
 
@@ -765,6 +772,9 @@ public partial class _Default : System.Web.UI.Page
             foreach (ListViewItem item in lvEmployees.Items)
             {
                 string empCode = ((Literal)item.FindControl("litEmpCode")).Text;
+
+
+
                 string empName = ((Literal)item.FindControl("LitEmpName")).Text;
                 double deductionDays = Convert.ToDouble(((Literal)item.FindControl("LitDeductionDays")).Text);
 
@@ -782,7 +792,18 @@ public partial class _Default : System.Web.UI.Page
                 double extraComm = Convert.ToDouble(((TextBox)item.FindControl("txtExtraCommission")).Text);
                 double advance = Convert.ToDouble(((TextBox)item.FindControl("txtAdvance")).Text);
 
-                int Litbasicsalary = Convert.ToInt32(((Literal)item.FindControl("Litbasicsalary")).Text);
+                int Litbasicsalary = 0;
+
+                Literal lit = (Literal)item.FindControl("Litbasicsalary");
+
+                if (lit != null && int.TryParse(lit.Text.Trim(), out Litbasicsalary))
+                {
+                    // value successfully converted
+                }
+                else
+                {
+                    Litbasicsalary = 0; // default value
+                }
               
                 int lessamount = Convert.ToInt32(extraLess) + Convert.ToInt32(advance);
 
@@ -806,6 +827,14 @@ public partial class _Default : System.Web.UI.Page
                 finalSalarycheck = finalSalarycheck - lessamount;
 
                 dueAdvance = dueAdvance - advance;
+
+
+                SqlCommand updateanddelete = new SqlCommand(@"BEGIN TRANSACTION; UPDATE emplist SET advanceamount = ISNULL(advanceamount, 0) + ( SELECT ISNULL(SUM(advanceamountcut), 0)   FROM finalsalaryreport     WHERE empcode = '" + empCode + "'  AND reportmonth = '" + monthName + "'       AND reportyear = '" + year + "' ) WHERE empcode = '" + empCode + "'; DELETE FROM finalsalaryreport WHERE empcode = '" + empCode + "'   AND reportmonth = '" + monthName + "'   AND reportyear =  '" + year + "';  COMMIT TRANSACTION; ", con);
+
+                updateanddelete.ExecuteNonQuery();
+
+
+
 
                 SqlCommand cmd = new SqlCommand(@"INSERT INTO finalsalaryreport
                 (empcode,Name,deductionday,sunday,sundayamountextra,esicut,tea,extracommsion,grosssalary,Commission,advanceamountcut,dueadvance,NetSalary,reportmonth,reportyear,rts,ExtraAmountLess,basicsalary)

@@ -53,8 +53,14 @@ public partial class finalSalaryReport : System.Web.UI.Page
 
     private void LoadData()
     {
+        string empid = "";
+        if (txtempid.Text != "")
+        {
+            empid = "and empcode in (" + txtempid.Text + ")";
+        
+        }
         SqlConnection con = new SqlConnection(connStr);
-        string sqlq = "select a.*," + ddlMonth.SelectedValue + " as month," + ddlYear.SelectedValue + " as year,(select emptype from emplist where empcode=a.empcode) as emptype,(select bankname from emplist where empcode=a.empcode) as bankname,(select bankifsc from emplist where empcode=a.empcode) as bankifsc,(select bankaccount from emplist where empcode=a.empcode) as bankaccount from finalsalaryreport   as a  where a.reportmonth='" + ddlMonth.SelectedItem + "' and	a.reportyear='" + ddlYear.SelectedItem + "' and a.empcode in (select empcode from  emplist where emptype='" + txtemptype.Text + "')";
+        string sqlq = "select a.*," + ddlMonth.SelectedValue + " as month," + ddlYear.SelectedValue + " as year,(select emptype from emplist where empcode=a.empcode) as emptype,(select bankname from emplist where empcode=a.empcode) as bankname,(select bankifsc from emplist where empcode=a.empcode) as bankifsc,(select bankaccount from emplist where empcode=a.empcode) as bankaccount from finalsalaryreport   as a  where a.reportmonth='" + ddlMonth.SelectedItem + "' and	a.reportyear='" + ddlYear.SelectedItem + "' and a.empcode in (select empcode from  emplist where emptype='" + txtemptype.Text + "' " + empid + " )";
        SqlDataAdapter da = new SqlDataAdapter(sqlq, con);
         DataTable dt = new DataTable();
         da.Fill(dt);
@@ -145,6 +151,12 @@ public partial class finalSalaryReport : System.Web.UI.Page
     }
     protected void Button1_Click1(object sender, EventArgs e)
     {
+        string empid = "";
+        if (txtempid.Text != "")
+        {
+            empid = "and empcode in (" + txtempid.Text + ")";
+
+        }
         using (SqlConnection con = new SqlConnection(connStr))
         {
             string sqlq = @"select a.empcode,a.name,a.deductionday,a.basicsalary,a.sunday,a.sundayamountextra,a.tea,a.Commission,
@@ -159,7 +171,7 @@ a.extracommsion,a.grosssalary,a.ExtraAmountLess as AdvanceSalary,a.advanceamount
                         WHERE a.reportmonth='" + ddlMonth.SelectedItem.Text + @"'
                         AND a.reportyear='" + ddlYear.SelectedItem.Text + @"'
                         AND a.empcode IN
-                        (SELECT empcode FROM emplist WHERE emptype='" + txtemptype.Text.Trim() + "')";
+                        (SELECT empcode FROM emplist WHERE emptype='" + txtemptype.Text.Trim() + "' " + empid + ")";
 
             SqlDataAdapter da = new SqlDataAdapter(sqlq, con);
             DataTable dt = new DataTable();
