@@ -147,9 +147,11 @@ public partial class finalSalaryReport : System.Web.UI.Page
     {
         using (SqlConnection con = new SqlConnection(connStr))
         {
-            string sqlq = @"SELECT a.*,
-                        '" + ddlMonth.SelectedValue + @"' AS Month,
-                        (SELECT emptype FROM emplist WHERE empcode=a.empcode) AS emptype,
+            string sqlq = @"select a.empcode,a.name,a.deductionday,a.basicsalary,a.sunday,a.sundayamountextra,a.tea,a.Commission,
+a.extracommsion,a.grosssalary,a.ExtraAmountLess as AdvanceSalary,a.advanceamountcut,a.NetSalary,a.esicut,a.dueadvance, 
+(SELECT emptype FROM emplist WHERE empcode=a.empcode) AS emptype,  '" + ddlMonth.SelectedItem + @"' AS Month,
+'" + ddlYear.SelectedItem + @"' AS Year,
+                       
                         (SELECT bankname FROM emplist WHERE empcode=a.empcode) AS bankname,
                         (SELECT bankifsc FROM emplist WHERE empcode=a.empcode) AS bankifsc,
                         (SELECT bankaccount FROM emplist WHERE empcode=a.empcode) AS bankaccount

@@ -16,7 +16,7 @@ public partial class _Default : System.Web.UI.Page
             BindMonth();
             BindYear();
         }
-        Response.Write("tyty");
+       
     }
 
     private void BindMonth()
@@ -98,7 +98,8 @@ public partial class _Default : System.Web.UI.Page
         cmddelete.ExecuteNonQuery();
 
 
-      
+        string emptype = "";
+
 
 
         DataTable salaryTable = new DataTable();
@@ -121,12 +122,12 @@ public partial class _Default : System.Web.UI.Page
 
         salaryTable.Columns.Add("year");
         salaryTable.Columns.Add("month");
-
+        salaryTable.Columns.Add("basicsalary");
 
         //where EmpCode='0007' 
-        SqlCommand empCmd = new SqlCommand("SELECT ID,empcode,empname,empsalary,esi,sundayamountgive,gender,rts,status,advanceamount FROM [emplist]  where EmpCode='0011'     ORDER BY id  DESC", con);
+        SqlCommand empCmd = new SqlCommand("SELECT emptype,ID,empcode,empname,empsalary,esi,sundayamountgive,gender,rts,status,advanceamount FROM [emplist]       ORDER BY id  DESC", con);
         SqlDataReader empDr = empCmd.ExecuteReader();
-
+        //  
         List<dynamic> employees = new List<dynamic>();
 
         while (empDr.Read())
@@ -140,7 +141,8 @@ public partial class _Default : System.Web.UI.Page
                 SundayAmount =  empDr["sundayamountgive"].ToString(),
                 Gender = empDr["gender"].ToString(),
                 Advance = Convert.ToDouble(empDr["advanceamount"]),
-                SundayAllowed = empDr["sundayamountgive"].ToString()
+                SundayAllowed = empDr["sundayamountgive"].ToString(),
+                emptype = empDr["emptype"].ToString()
             });
         }
         empDr.Close();
@@ -264,7 +266,7 @@ public partial class _Default : System.Web.UI.Page
                     conMin.Open();
 
                     SqlCommand cmdMin = new SqlCommand(
-                        "SELECT MIN(InTime) FROM Attendance WHERE CAST(  AS DATE)=@Date AND InTime IS NOT NULL",
+                        "SELECT MIN(InTime) FROM Attendance WHERE CAST(AttDate  AS DATE)=@Date AND InTime IS NOT NULL",
                         conMin);
 
                     cmdMin.Parameters.AddWithValue("@Date", attDate.Date);
@@ -344,7 +346,7 @@ public partial class _Default : System.Web.UI.Page
 
 
                             TimeSpan halfDayTime = new TimeSpan(14, 0, 0); // 2 PM
-                            TimeSpan noCutTime = new TimeSpan(19, 0, 0);   // 7 PM
+                            TimeSpan noCutTime = new TimeSpan(17, 0, 0);   // 5.30 PM
 
                             if (inOk && outOk)
                             {
@@ -534,8 +536,12 @@ public partial class _Default : System.Web.UI.Page
                     }
                 }
 
-
                 TimeSpan finalLateLimit = new TimeSpan(10, 18, 0);
+                if (emptype == "2")                
+                {
+                    finalLateLimit = new TimeSpan(10, 30, 0);
+                }
+                
 
                 // Agar first punch fixed late time ke baad hai
                 if (firstPunchTime >= finalLateLimit)
@@ -681,15 +687,18 @@ public partial class _Default : System.Web.UI.Page
                 sundayBonus = 0;
             
             }
-            double finalSalary = (monthlySalary - deductionAmount) + sundayBonus + totalcommissiondaily;
+            //
 
-            double grosssalary = (monthlySalary - deductionAmount) + sundayBonus;
+            double basicsalary = monthlySalary - deductionAmount;
+            double finalSalary = (monthlySalary - deductionAmount) + sundayBonus ;
+
+            double grosssalary = (monthlySalary - deductionAmount) + sundayBonus ;
             double esiCut = 0;
 
-            // ESI check (True / Yes / 1 handle karne ke liye)
+
             if (emp.ESI.ToString().ToLower() == "true" || emp.ESI.ToString() == "1")
             {
-                esiCut = finalSalary * 0.0075; // 0.25%
+                esiCut = monthlySalary * 0.0075; // 0.25%
                 finalSalary = finalSalary - esiCut;
             }
 
@@ -712,7 +721,8 @@ public partial class _Default : System.Web.UI.Page
               grosssalary,
                 finalSalary,
                 year,
-                month
+                month,
+                basicsalary
 
             );
         }
@@ -733,6 +743,9 @@ public partial class _Default : System.Web.UI.Page
         string year =ddlYear.SelectedItem.ToString();
         using (SqlConnection con = new SqlConnection("Data Source=mssql2017.adnshost.com,1533;Initial Catalog=testdb;User ID=testdb;Password=testdb@2575"))
         {
+
+
+
             con.Open();
             SqlCommand cmddelete = new SqlCommand("delete  from finalsalaryreport   where reportmonth='"+monthName+"' and	reportyear='"+year+"'", con);
             cmddelete.ExecuteNonQuery();
@@ -769,19 +782,35 @@ public partial class _Default : System.Web.UI.Page
                 double extraComm = Convert.ToDouble(((TextBox)item.FindControl("txtExtraCommission")).Text);
                 double advance = Convert.ToDouble(((TextBox)item.FindControl("txtAdvance")).Text);
 
-
-                int addamt = Convert.ToInt32(tea) + Convert.ToInt32(extraComm);
+                int Litbasicsalary = Convert.ToInt32(((Literal)item.FindControl("Litbasicsalary")).Text);
+              
                 int lessamount = Convert.ToInt32(extraLess) + Convert.ToInt32(advance);
 
 
-                netSalary = netSalary + addamt;
-                netSalary = netSalary - lessamount;
+              
+               
+                double esiCutnew = 0;
+
+                //  double grosssalary = (monthlySalary - deductionAmount) + sundayBonus + totalcommissiondaily;
+
+                double grosssalarycheck = grossSalary + Convert.ToDouble(tea) + Convert.ToDouble(extraComm) + Convert.ToDouble(commission);
+                double finalSalarycheck = 0;
+
+                if (Convert.ToInt32(esiCut)>0)
+                {
+                    esiCutnew = grosssalarycheck * 0.0075; // 0.25%
+                    finalSalarycheck = grosssalarycheck - esiCut;
+                }
+
+
+                finalSalarycheck = finalSalarycheck - lessamount;
+
                 dueAdvance = dueAdvance - advance;
 
                 SqlCommand cmd = new SqlCommand(@"INSERT INTO finalsalaryreport
-                (empcode,Name,deductionday,sunday,sundayamountextra,esicut,tea,extracommsion,grosssalary,Commission,advanceamountcut,dueadvance,NetSalary,reportmonth,reportyear,rts,ExtraAmountLess)
+                (empcode,Name,deductionday,sunday,sundayamountextra,esicut,tea,extracommsion,grosssalary,Commission,advanceamountcut,dueadvance,NetSalary,reportmonth,reportyear,rts,ExtraAmountLess,basicsalary)
                 VALUES
-                ('" + empCode + "','" + empName + "','" + deductionDays + "','" + sundayWorked + "'," + sundayText + ",'" + esiCut + "','" + tea + "','" + extraComm + "'," + grossSalary + ",'" + commission + "','" + advance + "','" + dueAdvance + "','" + netSalary + "','" + monthName + "','" + year + "',getdate(),'" + extraLess + "')", con);
+                ('" + empCode + "','" + empName + "','" + deductionDays + "','" + sundayWorked + "'," + sundayText + ",'" + esiCutnew + "','" + tea + "','" + extraComm + "'," + grosssalarycheck + ",'" + commission + "','" + advance + "','" + dueAdvance + "','" + finalSalarycheck + "','" + monthName + "','" + year + "',getdate(),'" + extraLess + "','" + Litbasicsalary + "')", con);
 
           
                

@@ -112,16 +112,29 @@
                                     <th>Emp Code</th>
                                     <th>Name</th>
                                     <th>Deduction Days</th>
+                                    <th>Basic</th>
+
                                     <th>Sunday</th>
-                                    <th>ESI Cut</th>
-                                    <th>Tea</th>
-                                     <th>Amount Less Extra</th>
-                                    <th>Extra Comm.</th>
+
+                                     <th>Tea</th>
+                                      <th>Commission</th>
+                                      <th>Extra Comm.</th>
                                     <th>Gross Salary</th>
-                                     <th>Commission</th>
-                                    
+                                       <th>Adv. Salary</th>
                                     <th>Ad. Amount</th>
-                                    <th>Net Salary</th>
+
+                                      <th>Net Salary</th>
+
+
+                                    <th>ESI Cut</th>
+                                   
+                                  
+                                  
+                                    
+                                   
+                                    
+                                    
+                                  
                                     <th>Due Advance.</th>
                                     <th>EMP Type</th>
                                     <th>Bank Name</th>
@@ -153,36 +166,60 @@
             <asp:Literal ID="LitDeductionDays" runat="server" Text='<%# Eval("deductionday") %>'></asp:Literal> <a href="viewleavereport.aspx?EmpCode=<%# Eval("EmpCode") %>&&year=<%# Eval("reportyear") %>&&month=<%# Eval("month") %>">check</a>
             
            </td>
+
+        <td>
+            <%# Eval("basicsalary") %>
+        </td>
         <td>
                 <asp:Literal ID="LitSundayWorked" runat="server" Text='<%# Eval("Sunday") %>'></asp:Literal>
           (Rs. <asp:Literal ID="LitSundayAmount" runat="server" Text='<%# Eval("sundayamountextra") %>'></asp:Literal>/-)<a href="sundayviewleavereport.aspx?EmpCode=<%# Eval("EmpCode") %>&&year=<%# Eval("reportyear") %>&&month=<%# Eval("month") %>">check</a>
          
         </td>
-        <td>
-          <%# Math.Round(Convert.ToDouble(Eval("esiCut"))) %>
-        </td>
-        <td>
+          <td>
             <%# Math.Round(Convert.ToDouble(Eval("tea"))) %>
-        </td>
-        <td>
-              <%# Math.Round(Convert.ToDouble(Eval("ExtraAmountLess"))) %>
-           
-        </td>
-        <td>
-          <%# Math.Round(Convert.ToDouble(Eval("extracommsion"))) %>
-        </td>
-        <td>
-            <asp:Literal ID="litGrossSalary" runat="server" Text='<%# Math.Round(Convert.ToDouble(Eval("grosssalary"))) %>'></asp:Literal>
         </td>
         <td>
             <asp:Literal ID="litCommission" runat="server" Text='<%# Math.Round(Convert.ToDouble(Eval("Commission"))) %>'></asp:Literal><a href="commsioncutreport.aspx?EmpCode=<%# Eval("EmpCode") %>&&year=<%# Eval("year") %>&&month=<%# Eval("month") %>">check</a>
         </td>
-        <td>
+         <td>
+          <%# Math.Round(Convert.ToDouble(Eval("extracommsion"))) %>
+        </td>
+         <td>
+            <asp:Literal ID="litGrossSalary" runat="server" Text='<%# Math.Round(Convert.ToDouble(Eval("grosssalary"))) %>'></asp:Literal>
+        </td>
+
+          <td>
+              <%# Math.Round(Convert.ToDouble(Eval("ExtraAmountLess"))) %>
+           
+        </td>
+             <td>
        <%# Math.Round(Convert.ToDouble(Eval("advanceamountcut"))) %>
         </td>
-        <td>
+              <td>
             <asp:Literal ID="litNetSalary" runat="server" Text='<%# Math.Round(Convert.ToDouble(Eval("NetSalary"))) %>'></asp:Literal>
+        </td>                       
+                                 
+                                 
+                                   
+
+
+
+
+
+
+
+
+
+        <td>
+          <%# Math.Round(Convert.ToDouble(Eval("esiCut"))) %>
         </td>
+      
+      
+       
+       
+        
+   
+      
         <td>
             <asp:Literal ID="litDueAdvance" runat="server" Text='<%# Eval("dueadvance") %>'></asp:Literal>
         </td>

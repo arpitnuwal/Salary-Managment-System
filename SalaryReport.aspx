@@ -133,7 +133,7 @@
     <tr>
         <td>
              <asp:Literal ID="LitEmpCode" runat="server" Text='<%# Eval("EmpCode") %>'></asp:Literal>
-            
+            <asp:Literal ID="Litbasicsalary" runat="server" Text='<%# Eval("basicsalary") %>'></asp:Literal>
             </td>
 
 
