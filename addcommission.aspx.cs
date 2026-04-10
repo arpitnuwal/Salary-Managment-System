@@ -174,7 +174,7 @@ protected void btnSave_Click(object sender, EventArgs e)
 
                 decimal qty;
 
-                if (!decimal.TryParse(row["Qty"] != DBNull.Value ? row["Qty"].ToString() : "0", out qty))
+                if (!decimal.TryParse(row["Qty."] != DBNull.Value ? row["Qty."].ToString() : "0", out qty))
                     continue;
               
                 decimal totalcommission = commission * qty;
@@ -201,7 +201,7 @@ protected void btnSave_Click(object sender, EventArgs e)
 
                 foreach (string code in cleanCodes)
                 {
-                    string empcode = code.PadLeft(4, '0');
+                    string empcode = code.PadLeft(5, '0');
 
                     SqlCommand sql = new SqlCommand(
                         "INSERT INTO Commission(EmpCode, Amount, CommissionAmount,CommissionDate, CreatedDate,sinleamount) " +

@@ -52,137 +52,178 @@ public partial class addAttendance : System.Web.UI.Page
             ddlYear.Items.Add(new ListItem(i.ToString(), i.ToString()));
         }
     }
-    protected void btnSave_Click(object sender, EventArgs e)
-    {
-        if (!FileUpload1.HasFile)
-        {
-            Label1.Text = "Please select Excel file.";
-            return;
-        }
-  
-        string path = Server.MapPath("~/AttendanceUploads/" + FileUpload1.FileName);
-        FileUpload1.SaveAs(path);
 
-        DataTable dt = new DataTable();
+
+
+protected void btnSave_Click(object sender, EventArgs e)
+{
+    if (!FileUpload1.HasFile)
+    {
+        Label1.Text = "Please select Excel file.";
+        return;
+    }
+
+    try
+    {
+        string folderPath = Server.MapPath("~/AttendanceUploads/");
+        if (!Directory.Exists(folderPath))
+            Directory.CreateDirectory(folderPath);
+
+        string filePath = Path.Combine(folderPath, FileUpload1.FileName);
+        FileUpload1.SaveAs(filePath);
 
         ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-        using (ExcelPackage package = new ExcelPackage(new FileInfo(path)))
-        {
-            Response.Write("Sheet Count = " + package.Workbook.Worksheets.Count + "<br>");
 
-            foreach (var s in package.Workbook.Worksheets)
-            {
-                Response.Write("Sheet Name = " + s.Name + "<br>");
-            }
-
-            if (package.Workbook.Worksheets.Count == 0)
-            {
-                Label1.Text = "No worksheet found";
-                return;
-            }
-
-            ExcelWorksheet ws = package.Workbook.Worksheets.First();
-
-            int totalRows = ws.Dimension.End.Row;
-            int totalCols = ws.Dimension.End.Column;
-        }
-        using (ExcelPackage package = new ExcelPackage(new FileInfo(path)))
-        {
-            ExcelWorksheet ws = package.Workbook.Worksheets.FirstOrDefault();
-
-            int totalRows = ws.Dimension.End.Row;
-            int totalCols = ws.Dimension.End.Column;
-
-            for (int col = 1; col <= totalCols; col++)
-            {
-                dt.Columns.Add("Col" + col);
-            }
-
-            for (int row = 1; row <= totalRows; row++)
-            {
-                DataRow dr = dt.NewRow();
-
-                for (int col = 1; col <= totalCols; col++)
-                {
-                    dr[col - 1] = ws.Cells[row, col].Text;
-                }
-
-                dt.Rows.Add(dr);
-            }
-        }
-
-        using (SqlConnection sql = new SqlConnection("Data Source=mssql2017.adnshost.com,1533;Initial Catalog=testdb;User ID=testdb;Password=testdb@2575"))
+        using (SqlConnection sql = new SqlConnection(
+            "Data Source=mssql2017.adnshost.com,1533;Initial Catalog=testdb;User ID=testdb;Password=testdb@2575"))
         {
             sql.Open();
 
-            SqlCommand cmddelete = new SqlCommand(
-                "DELETE FROM Attendance WHERE YEAR(rts)=@y AND MONTH(rts)=@m", sql);
+            // Purana month data delete
+            SqlCommand deleteCmd = new SqlCommand(
+                "DELETE FROM Attendance WHERE YEAR(rts)=@Year AND MONTH(rts)=@Month", sql);
 
-            cmddelete.Parameters.AddWithValue("@y", ddlYear.SelectedValue);
-            cmddelete.Parameters.AddWithValue("@m", ddlMonth.SelectedValue);
-            cmddelete.ExecuteNonQuery();
+            deleteCmd.Parameters.AddWithValue("@Year", Convert.ToInt32(ddlYear.SelectedValue));
+            deleteCmd.Parameters.AddWithValue("@Month", Convert.ToInt32(ddlMonth.SelectedValue));
+            deleteCmd.ExecuteNonQuery();
 
-            string empCode = "";
-            string empName = "";
-
-            for (int i = 0; i < dt.Rows.Count; i++)
+            using (ExcelPackage package = new ExcelPackage(new FileInfo(filePath)))
             {
-                for (int c = 0; c < dt.Columns.Count; c++)
-                {
-                    string val = dt.Rows[i][c].ToString().Trim();
+                ExcelWorksheet ws = package.Workbook.Worksheets.FirstOrDefault();
 
-                    if (val.Equals("Empcode", StringComparison.OrdinalIgnoreCase))
+                if (ws == null)
+                {
+                    Label1.Text = "No worksheet found.";
+                    return;
+                }
+
+                int totalRows = ws.Dimension.End.Row;
+                int totalCols = ws.Dimension.End.Column;
+
+                string currentEmpCode = "";
+                string currentEmpName = "";
+
+                for (int row = 1; row <= totalRows; row++)
+                {
+                    // Employee details detect
+                    for (int col = 1; col <= totalCols; col++)
                     {
-                        empCode = dt.Rows[i][c + 1].ToString().Trim();
-                        empName = dt.Rows[i][c + 3].ToString().Trim();
+                        string cellText = ws.Cells[row, col].Text.Trim();
+
+                        if (cellText.ToLower().Contains("emp"))
+                        {
+                            for (int nextCol = col + 1; nextCol <= col + 3 && nextCol <= totalCols; nextCol++)
+                            {
+                                string val = ws.Cells[row, nextCol].Text.Trim();
+                                if (!string.IsNullOrWhiteSpace(val))
+                                {
+                                    currentEmpCode = val;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (cellText.ToLower().Contains("name"))
+                        {
+                            for (int nextCol = col + 1; nextCol <= col + 5 && nextCol <= totalCols; nextCol++)
+                            {
+                                string val = ws.Cells[row, nextCol].Text.Trim();
+                                if (!string.IsNullOrWhiteSpace(val))
+                                {
+                                    currentEmpName = val;
+                                    break;
+                                }
+                            }
+                        }
                     }
+
+                    // Date read
+                    string dateText = ws.Cells[row, 1].Text.Trim();
+
+                    if (string.IsNullOrWhiteSpace(dateText))
+                        continue;
+
+                    DateTime attDate;
+                    double oaDate;
+
+                    if (double.TryParse(dateText, out oaDate))
+                    {
+                        attDate = DateTime.FromOADate(oaDate);
+                    }
+                    else if (!DateTime.TryParseExact(
+                        dateText,
+                        new string[] { "dd/MM/yyyy", "d/M/yyyy", "MM/dd/yyyy" },
+                        CultureInfo.InvariantCulture,
+                        DateTimeStyles.None,
+                        out attDate))
+                    {
+                        continue;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(currentEmpCode))
+                        continue;
+
+                    // Column mapping
+                    string shift = totalCols >= 3 ? ws.Cells[row, 3].Text.Trim() : "";
+                    string inTime = totalCols >= 4 ? ws.Cells[row, 4].Text.Trim() : "";
+                    string outTime = totalCols >= 19 ? ws.Cells[row, 19].Text.Trim() : "";
+
+                    // Break calculation
+                    TimeSpan totalBreak = TimeSpan.Zero;
+
+                    // Out1 -> In2 -> Out2 -> In3 ...
+                    for (int col = 5; col < totalCols; col += 2)
+                    {
+                        string prevOut = ws.Cells[row, col].Text.Trim();       // Out1, Out2
+                        string nextIn = ws.Cells[row, col + 1].Text.Trim();    // In2, In3
+
+                        DateTime outDT, inDT;
+
+                        if (DateTime.TryParse(prevOut, out outDT) &&
+                            DateTime.TryParse(nextIn, out inDT))
+                        {
+                            if (inDT > outDT)
+                            {
+                                totalBreak += (inDT - outDT);
+                            }
+                        }
+                    }
+
+                    string breakTime = totalBreak.ToString(@"hh\:mm");
+
+                    SqlCommand insertCmd = new SqlCommand(
+                        @"INSERT INTO Attendance
+                        (EmpCode, AttDate, Shift, InTime, OutTime, BreakTime, rts)
+                        VALUES
+                        (@EmpCode, @AttDate, @Shift, @InTime, @OutTime, @BreakTime,
+                         DATEFROMPARTS(@Year, @Month, 1))", sql);
+
+                    insertCmd.Parameters.AddWithValue("@EmpCode", currentEmpCode);
+                
+                    insertCmd.Parameters.AddWithValue("@AttDate", attDate);
+                    insertCmd.Parameters.AddWithValue("@Shift", shift);
+                    insertCmd.Parameters.AddWithValue("@InTime", inTime);
+                    insertCmd.Parameters.AddWithValue("@OutTime", outTime);
+                    insertCmd.Parameters.AddWithValue("@BreakTime", breakTime);
+                    insertCmd.Parameters.AddWithValue("@Year", Convert.ToInt32(ddlYear.SelectedValue));
+                    insertCmd.Parameters.AddWithValue("@Month", Convert.ToInt32(ddlMonth.SelectedValue));
+
+                    insertCmd.ExecuteNonQuery();
                 }
-
-                string dateCell = dt.Rows[i][0].ToString().Trim();
-
-                DateTime d;
-                double oa;
-
-                if (double.TryParse(dateCell, out oa))
-                {
-                    d = DateTime.FromOADate(oa);
-                }
-                else if (!DateTime.TryParseExact(
-                    dateCell,
-                    new string[] { "dd/MM/yyyy", "d/M/yyyy", "MM/dd/yyyy" },
-                    CultureInfo.InvariantCulture,
-                    DateTimeStyles.None,
-                    out d))
-                {
-                    continue;
-                }
-
-                if (string.IsNullOrEmpty(empCode))
-                    continue;
-
-                string shift = dt.Rows[i][1].ToString().Trim();
-                string inTime = dt.Rows[i][2].ToString().Trim();
-
-                string outTime = dt.Columns.Count > 17 ? dt.Rows[i][17].ToString().Trim() : "";
-                string breakTime = dt.Columns.Count > 20 ? dt.Rows[i][20].ToString().Trim() : "";
-
-                SqlCommand cmd = new SqlCommand(
-                    "INSERT INTO Attendance(EmpCode,AttDate,Shift,InTime,OutTime,BreakTime,rts) " +
-                    "VALUES(@EmpCode,@Date,@Shift,@In,@Out,@Break,DATEFROMPARTS(@Year,@Month,1))", sql);
-
-                cmd.Parameters.AddWithValue("@EmpCode", empCode);
-                cmd.Parameters.AddWithValue("@Date", d);
-                cmd.Parameters.AddWithValue("@Shift", shift);
-                cmd.Parameters.AddWithValue("@In", inTime);
-                cmd.Parameters.AddWithValue("@Out", outTime);
-                cmd.Parameters.AddWithValue("@Break", breakTime);
-                cmd.Parameters.AddWithValue("@Year", ddlYear.SelectedValue);
-                cmd.Parameters.AddWithValue("@Month", ddlMonth.SelectedValue);
-
-                cmd.ExecuteNonQuery();
             }
         }
 
         Label1.Text = "Excel Import Successful";
     }
+    catch (Exception ex)
+    {
+        Label1.Text = "Error: " + ex.Message;
+    }
+}
+
+
+
+
+
+
 }
