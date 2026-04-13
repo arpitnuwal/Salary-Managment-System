@@ -54,18 +54,15 @@ public partial class _Default : System.Web.UI.Page
             @"Data Source=mssql2017.adnshost.com,1533;Initial Catalog=testdb;User ID=testdb;Password=testdb@2575"))
         {
             con.Open();
-
-            SqlCommand cmd = new SqlCommand(
-                "SELECT COUNT(*) FROM Attendance " +
-                "WHERE EmpCode=@EmpCode " +
-                "AND CAST(AttDate AS DATE)=@Date " +
+            string sql = "SELECT COUNT(*) FROM Attendance "
+                + "WHERE EmpCode="+empCode+" " +
+                "AND CAST(AttDate AS DATE)='" + checkDate.Date + "' " +
                 "AND InTime IS NOT NULL " +
                 "AND LTRIM(RTRIM(InTime)) <> '' " +
-                "AND LTRIM(RTRIM(InTime)) <> '--:--'",
-                con);
+                "AND LTRIM(RTRIM(InTime)) <> '--:--'";
+            SqlCommand cmd = new SqlCommand(sql , con);
 
-            cmd.Parameters.AddWithValue("@EmpCode", empCode);
-            cmd.Parameters.AddWithValue("@Date", checkDate.Date);
+         
 
             int count = Convert.ToInt32(cmd.ExecuteScalar());
 
@@ -132,6 +129,9 @@ public partial class _Default : System.Web.UI.Page
         salaryTable.Columns.Add("basicsalary");
 
         //where EmpCode='0007' 
+
+
+
         SqlCommand empCmd = new SqlCommand("SELECT emptype,ID,empcode,empname,empsalary,esi,sundayamountgive,gender,rts,status,advanceamount FROM [emplist]  where 1=1   " + empid + "    ORDER BY id  DESC", con);
         SqlDataReader empDr = empCmd.ExecuteReader();
         //  
@@ -149,9 +149,13 @@ public partial class _Default : System.Web.UI.Page
                 Gender = empDr["gender"].ToString(),
                 Advance = Convert.ToDouble(empDr["advanceamount"]),
                 SundayAllowed = empDr["sundayamountgive"].ToString(),
-                emptype = empDr["emptype"].ToString()
+                emptypehe = empDr["emptype"].ToString()
             });
         }
+
+
+
+       
         empDr.Close();
         Dictionary<DateTime, bool> officeClosedDayCache = new Dictionary<DateTime, bool>();
        // ट्रेन में जोम्बी का आतंक 
@@ -163,7 +167,7 @@ public partial class _Default : System.Web.UI.Page
             double monthlySalary = emp.Salary; // 🔥 Dynamic salary
             double sundayRate = monthlySalary/30;
             double advance = emp.Advance;
-
+            emptype = emp.emptypehe;
             SqlCommand cmd = new SqlCommand("select * from Attendance where EmpCode=@EmpCode and  YEAR(rts) = " + ddlYear.SelectedValue + "   AND MONTH(rts) = " + ddlMonth.SelectedValue + ";", con);
             cmd.Parameters.AddWithValue("@EmpCode", empCode);
 
@@ -302,14 +306,14 @@ public partial class _Default : System.Web.UI.Page
 
             //    daysInMonth = DateTime.DaysInMonth(attDate.Year, attDate.Month);
 
-                
+                string chkdateggggggg = dr["AttDate"].ToString();
                 TimeSpan inTime, outTime, breakTime;
 
                 bool inOk = TimeSpan.TryParse(intime, out inTime);
                 bool outOk = TimeSpan.TryParse(outtime, out outTime);
                 bool breakOk = TimeSpan.TryParse(breaktime, out breakTime);
 
-                bool isFemale = gender.ToUpper() == "F";
+                string isFemale = "F";
 
                 string gggg = chkdate;
 
@@ -343,9 +347,16 @@ public partial class _Default : System.Web.UI.Page
 
                         if (isSandwichLeave)
                         {
-                            sundayremark = "SandwichLeave Apply";
-                            // Sunday amount bhi cut
-                            holiday += 1;
+                            if (inOk)
+                            {
+                                sundayWorked++;
+                            }
+                            else
+                            {
+                                sundayremark = "SandwichLeave Apply";
+                                // Sunday amount bhi cut
+                                holiday += 1;
+                            }
                         }
 
                         else
@@ -411,8 +422,71 @@ public partial class _Default : System.Web.UI.Page
                        
                         if (emp.SundayAmount.ToString().ToLower() == "true" || emp.SundayAmount.ToString() == "1")
                         {
+                            DateTime prevDay = attDate.AddDays(-1); // Saturday
+                            DateTime nextDay = attDate.AddDays(1);  // Monday
+                            bool isPrevLeave = IsAbsentDay(empCode, prevDay);
+                            bool isNextLeave = IsAbsentDay(empCode, nextDay);
 
-                        }
+                            bool isSandwichLeave = isPrevLeave && isNextLeave;
+
+                            if (isSandwichLeave)
+                            {
+                                if (inOk)
+                                {
+
+                                }
+                                else
+                                {
+                                    sundayremark = "SandwichLeave Apply";
+                                    // Sunday amount bhi cut
+                                    holiday += 1;
+                                }
+                            }
+
+
+
+                            //
+
+
+                            if (sundayremark != "SandwichLeave Apply")
+                            {
+                                string inTimeValue = inOk ? inTime.ToString() : "";
+                                string outTimeValue = outOk ? outTime.ToString() : "";
+                                string breakTimeValue = breakOk ? breakTime.ToString() : "";
+
+                                using (SqlConnection conInsert = new SqlConnection(
+                                    @"Data Source=mssql2017.adnshost.com,1533;Initial Catalog=testdb;User ID=testdb;Password=testdb@2575"))
+                                {
+                                    conInsert.Open();
+
+                                    SqlCommand cmdextra = new SqlCommand(
+                                        "INSERT INTO AttendanceDeductionLog " +
+                                        "(EmpCode, AttDate, InTime, OutTime, BreakTime, Deduction, DeductionType, Reason, CreatedOn) " +
+                                        "VALUES (@EmpCode, @AttDate, @InTime, @OutTime, @BreakTime, @Deduction, @DeductionType, @Reason, DATEFROMPARTS(@Year,@Month,1))",
+                                        conInsert);
+
+                                    cmdextra.Parameters.AddWithValue("@EmpCode", empCode);
+                                    cmdextra.Parameters.AddWithValue("@AttDate", attDate);
+                                    cmdextra.Parameters.AddWithValue("@InTime", inTimeValue);
+                                    cmdextra.Parameters.AddWithValue("@OutTime", outTimeValue);
+                                    cmdextra.Parameters.AddWithValue("@BreakTime", breakTimeValue);
+                                    cmdextra.Parameters.AddWithValue("@Deduction", holiday);
+                                    cmdextra.Parameters.AddWithValue("@DeductionType", "Sunday Leave");
+                                    cmdextra.Parameters.AddWithValue("@Reason", sundayremark);
+                                    cmdextra.Parameters.AddWithValue("@Year", ddlYear.SelectedValue);
+                                    cmdextra.Parameters.AddWithValue("@Month", ddlMonth.SelectedValue);
+
+                                    cmdextra.ExecuteNonQuery();
+                                }
+                                totalDeductionDays += holiday;
+                            }
+
+
+                }
+
+               
+                            //
+                        
 
                         else
 
@@ -497,8 +571,11 @@ public partial class _Default : System.Web.UI.Page
                                 {
                                     holiday += 0.50;
                                 }
+
                                 else if (outTime >= new TimeSpan(17, 30, 0) &&
-                                         outTime < new TimeSpan(20, 0, 0))
+           outTime < (isFemale.ToLower() == "f"
+                       ? new TimeSpan(19, 0, 0)
+                       : new TimeSpan(20, 0, 0)))
                                 {
                                     holiday += 0.25;
                                 }
@@ -522,13 +599,18 @@ public partial class _Default : System.Web.UI.Page
                 using (SqlConnection conlateee = new SqlConnection(@"Data Source=mssql2017.adnshost.com,1533;Initial Catalog=testdb;User ID=testdb;Password=testdb@2575"))
                 {
                     conlateee.Open();
+                    string sql = @"";
+                    if (emptype == "1")
+                    {
+                        sql = @"SELECT MIN(InTime) FROM Attendance WHERE CAST(AttDate AS DATE) = '" + chkdate + "'   AND InTime IS NOT NULL   AND LTRIM(RTRIM(InTime)) <> ''   AND LTRIM(RTRIM(InTime)) <> '--:--' and EmpCode in (select empcode from  [emplist] where emptype='1')";
+                    }
+                    else
+                    {
 
-                    SqlCommand cmdconlateee = new SqlCommand(
-                        "SELECT MIN(InTime) FROM Attendance " +
-                        "WHERE CAST(AttDate AS DATE)=@Date " +
-                        "AND InTime IS NOT NULL " +
-                        "AND LTRIM(RTRIM(InTime)) <> '' " +
-                        "AND LTRIM(RTRIM(InTime)) <> '--:--'", conlateee);
+                        sql = @"SELECT MIN(InTime) FROM Attendance WHERE CAST(AttDate AS DATE) = '" + chkdate + "'   AND InTime IS NOT NULL   AND LTRIM(RTRIM(InTime)) <> ''   AND LTRIM(RTRIM(InTime)) <> '--:--' and EmpCode in (select empcode from  [emplist] where emptype='2')";
+                    }
+
+                    SqlCommand cmdconlateee = new SqlCommand(sql, conlateee);
 
                     cmdconlateee.Parameters.AddWithValue("@Date", chkdate);
 
@@ -538,9 +620,18 @@ public partial class _Default : System.Web.UI.Page
                     {
                         firstPunchTime = TimeSpan.Parse(result.ToString());
 
-                        // first punch + 10 min
-                        lateLimit = firstPunchTime.Add(new TimeSpan(0, 5, 0));
+                        TimeSpan checkTime = emptype == "1"
+                            ? new TimeSpan(10, 18, 0)
+                            : new TimeSpan(10, 30, 0);
+
+                        lateLimit = firstPunchTime;
+
+                        if (firstPunchTime > checkTime)
+                        {
+                            lateLimit = firstPunchTime.Add(TimeSpan.FromMinutes(5));
+                        }
                     }
+                
                 }
 
                 TimeSpan finalLateLimit = new TimeSpan(10, 18, 0);
@@ -637,6 +728,27 @@ public partial class _Default : System.Web.UI.Page
                     string outTimeValue = outOk ? outTime.ToString() : "";
                     string breakTimeValue = breakOk ? breakTime.ToString() : "";
 
+                    DateTime prevDay = attDate.AddDays(-1); // Saturday
+                    DateTime nextDay = attDate.AddDays(1);  // Monday
+                    bool isPrevLeave = IsAbsentDay(empCode, prevDay);
+                    bool isNextLeave = IsAbsentDay(empCode, nextDay);
+
+                    bool isSandwichLeave = isPrevLeave && isNextLeave;
+
+                    if (isSandwichLeave)
+                    {
+                        if (inOk)
+                        {
+
+                        }
+                        else
+                        {
+                            sundayremark = "SandwichLeave Apply";
+                            reason = "SandwichLeave Apply";
+                        }
+                    }
+
+                    
                     using (SqlConnection conInsert = new SqlConnection(
                         @"Data Source=mssql2017.adnshost.com,1533;Initial Catalog=testdb;User ID=testdb;Password=testdb@2575"))
                     {

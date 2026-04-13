@@ -152,7 +152,7 @@
     <tr>
         <td>
              <asp:Literal ID="LitEmpCode" runat="server" Text='<%# Eval("EmpCode") %>'></asp:Literal>
-            
+            <a href="Printslip.aspx?EmpCode=<%# Eval("EmpCode") %>&&year=<%# Eval("reportyear") %>&&month=<%# Eval("reportmonth") %>">Print</a>
             </td>
 
 
