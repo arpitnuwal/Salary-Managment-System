@@ -277,7 +277,7 @@ public partial class _Default : System.Web.UI.Page
                     conMin.Open();
 
                     SqlCommand cmdMin = new SqlCommand(
-                        "SELECT MIN(InTime) FROM Attendance WHERE CAST(AttDate  AS DATE)=@Date AND InTime IS NOT NULL",
+                        "SELECT MIN(InTime) FROM Attendance WHERE CAST(AttDate  AS DATE)=@Date  and EmpCode in (select empcode from  [emplist] where emptype='"+emptype+"') AND InTime IS NOT NULL",
                         conMin);
 
                     cmdMin.Parameters.AddWithValue("@Date", attDate.Date);
