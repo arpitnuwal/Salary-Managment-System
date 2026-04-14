@@ -304,7 +304,7 @@ public partial class _Default : System.Web.UI.Page
 
                 }
 
-            //    daysInMonth = DateTime.DaysInMonth(attDate.Year, attDate.Month);
+          
 
                 string chkdateggggggg = dr["AttDate"].ToString();
                 TimeSpan inTime, outTime, breakTime;
@@ -635,11 +635,11 @@ public partial class _Default : System.Web.UI.Page
                 }
 
                 TimeSpan finalLateLimit = new TimeSpan(10, 18, 0);
-                if (emptype == "2")                
+
+                if (emptype == "2")
                 {
                     finalLateLimit = new TimeSpan(10, 30, 0);
                 }
-                
 
                 // Agar first punch fixed late time ke baad hai
                 if (firstPunchTime >= finalLateLimit)
@@ -647,13 +647,18 @@ public partial class _Default : System.Web.UI.Page
                     finalLateLimit = firstPunchTime.Add(new TimeSpan(0, 5, 0));
                 }
 
-                if (attDate.DayOfWeek == DayOfWeek.Sunday)
+                // NEW CONDITION
+                // Agar office 12:30 PM ke baad open hua hai to 1 hour extra grace
+                if (firstPunchTime >= new TimeSpan(12, 0, 0))
                 {
-                     finalLateLimit = new TimeSpan(11, 20, 0);
-                
+                    finalLateLimit = finalLateLimit.Add(new TimeSpan(0, 30, 0));
+                    holiday -= 0.50;
                 }
 
-
+                if (attDate.DayOfWeek == DayOfWeek.Sunday)
+                {
+                    finalLateLimit = new TimeSpan(11, 20, 0);
+                }
                 if (inOk && inTime > finalLateLimit)
                 {
                     lateDays++;
