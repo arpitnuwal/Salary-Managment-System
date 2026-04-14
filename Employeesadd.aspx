@@ -143,6 +143,19 @@
                         </div>
 
                           <div class="field">
+                            <label for="txtEmpSalary">EMP Folder</label>
+                            <div class="input-wrap">
+                                <i class="fa-solid fa-indian-rupee-sign input-icon"></i>
+                                <asp:TextBox ID="txtfolder"
+                                             runat="server"
+                                             placeholder="e.g. 1"
+                                             MaxLength="15" Text="0"
+                                           />
+                            </div>
+                            
+                         
+                        </div>
+                          <div class="field">
                             <label for="txtEmpSalary">Bank Name</label>
                             <div class="input-wrap">
                                 <i class="fa-solid fa-indian-rupee-sign input-icon"></i>
@@ -256,7 +269,7 @@
         
                  <asp:Label ID="lblbankaccount" runat="server" Text='<%# Eval("bankaccount") %>' Visible="false"></asp:Label>
 
-        
+          <asp:Label ID="lblfolder" runat="server" Text='<%# Eval("folder") %>' Visible="false"></asp:Label>
 
 
                 <td><%# Container.DataItemIndex + 1 %></td>

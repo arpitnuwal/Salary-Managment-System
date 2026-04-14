@@ -647,12 +647,30 @@ public partial class _Default : System.Web.UI.Page
                     finalLateLimit = firstPunchTime.Add(new TimeSpan(0, 5, 0));
                 }
 
-                // NEW CONDITION
-                // Agar office 12:30 PM ke baad open hua hai to 1 hour extra grace
+                Response.Write(holiday);
                 if (firstPunchTime >= new TimeSpan(12, 0, 0))
                 {
                     finalLateLimit = finalLateLimit.Add(new TimeSpan(0, 30, 0));
-                    holiday -= 0.50;
+                  
+                  
+                    if(holiday>0){
+                        if (holiday == 0.25)
+                        {
+                            holiday -= 0.25;
+                        }
+                        else if (holiday == 0.50)
+                        {
+                            holiday -= 0.50;
+                        
+                        }
+                    }
+                    string breakTimeValue = breakOk ? breakTime.ToString(@"hh\:mm") : "";
+
+                    if (breakOk && breakTime >= new TimeSpan(2, 0, 0))
+                    {
+                        holiday += 0.25;
+                    }
+
                 }
 
                 if (attDate.DayOfWeek == DayOfWeek.Sunday)

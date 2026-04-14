@@ -36,12 +36,12 @@ public partial class Employeesadd : System.Web.UI.Page
         
         if (id == 0)
         {
-            cmd.CommandText = "INSERT INTO [emplist](empcode,empname,empsalary,esi,sundayamountgive,gender,rts,status,advanceamount,emptype,bankname,bankifsc,bankaccount) VALUES('" + txtEmpCode.Text + "','" + txtEmpName.Text + "','" + txtEmpSalary.Text + "','"+esi+"','"+sundayamountgive+"','"+gender+"',getdate(),1,'"+txtadvance.Text+"','"+txtemptpye.Text+"','"+txtbankname.Text+"','"+txtifsc.Text+"','"+txtaccount.Text+"')";
+            cmd.CommandText = "INSERT INTO [emplist](empcode,empname,empsalary,esi,sundayamountgive,gender,rts,status,advanceamount,emptype,bankname,bankifsc,bankaccount,folder) VALUES('" + txtEmpCode.Text + "','" + txtEmpName.Text + "','" + txtEmpSalary.Text + "','" + esi + "','" + sundayamountgive + "','" + gender + "',getdate(),1,'" + txtadvance.Text + "','" + txtemptpye.Text + "','" + txtbankname.Text + "','" + txtifsc.Text + "','" + txtaccount.Text + "','"+txtfolder.Text+"')";
         
 }
         else
         {
-            cmd.CommandText = "UPDATE emplist SET emptype='"+txtemptpye.Text+"',bankname='"+txtbankname.Text+"',bankifsc='"+txtifsc.Text+"',bankaccount='"+txtaccount.Text+"', empcode='" + txtEmpCode.Text + "', EmpName='" + txtEmpName.Text + "', EmpSalary='" + txtEmpSalary.Text + "',esi='" + esi + "',sundayamountgive='" + sundayamountgive + "',gender='" + gender + "',advanceamount='" + txtadvance.Text + "' WHERE id=" + id + "";
+            cmd.CommandText = "UPDATE emplist SET folder='"+txtfolder.Text+"',emptype='" + txtemptpye.Text + "',bankname='" + txtbankname.Text + "',bankifsc='" + txtifsc.Text + "',bankaccount='" + txtaccount.Text + "', empcode='" + txtEmpCode.Text + "', EmpName='" + txtEmpName.Text + "', EmpSalary='" + txtEmpSalary.Text + "',esi='" + esi + "',sundayamountgive='" + sundayamountgive + "',gender='" + gender + "',advanceamount='" + txtadvance.Text + "' WHERE id=" + id + "";
         
         }
 
@@ -84,7 +84,7 @@ public partial class Employeesadd : System.Web.UI.Page
             txtifsc.Text = ((Label)e.Item.FindControl("lblbankifsc")).Text;
             txtaccount.Text = ((Label)e.Item.FindControl("lblbankaccount")).Text;
 
-
+            txtfolder.Text = ((Label)e.Item.FindControl("lblfolder")).Text;
 
 
 

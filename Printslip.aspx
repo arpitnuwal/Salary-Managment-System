@@ -41,9 +41,9 @@
     <table style="width:100%; border-collapse:collapse; font-size:18px;">
         <tr>
             <td style="border:1px solid #000; padding:8px;"><b>Name:</b></td>
-            <td style="border:1px solid #000; padding:8px;">Mrs. <asp:Label ID="lblname" runat="server" Text="Label"></asp:Label></td>
-            <td style="border:1px solid #000; padding:8px;"><b>Designation</b></td>
-            <td style="border:1px solid #000; padding:8px;"><b>Other</b></td>
+            <td style="border:1px solid #000; padding:8px;"><asp:Label ID="lblname" runat="server" Text="Label"></asp:Label></td>
+            
+            <td style="border:1px solid #000; padding:8px;"><b></b></td>
         </tr>
 
         <tr>
@@ -60,15 +60,13 @@
                 </table>
             </td>
 
-            <td style="border:1px solid #000; vertical-align:top; padding:10px;">
-                <b></b>
-            </td>
+      
 
             <td style="border:1px solid #000; vertical-align:top; padding:0;">
                 <table style="width:100%; border-collapse:collapse;">
-                    <tr><td style="border:1px solid #000; padding:5px;">A DAYS OF THE MONTH</td><td style="border:1px solid #000; padding:5px;">30</td></tr>
+                   
                     <tr><td style="border:1px solid #000; padding:5px;">B TOTAL LEAVE DAYS</td><td style="border:1px solid #000; padding:5px;"> <asp:Label ID="lbllaeve" runat="server" Text="Label"></asp:Label></td></tr>
-                    <tr><td style="border:1px solid #000; padding:5px;">Total Salary Days</td><td style="border:1px solid #000; padding:5px;"> <asp:Label ID="lbltotalsalaryday" runat="server" Text="Label"></asp:Label></td></tr>
+                    
                     <tr><td style="border:1px solid #000; padding:5px;">Sunday Bonus</td><td style="border:1px solid #000; padding:5px;"> <asp:Label ID="lblsundaycount" runat="server" Text="Label"></asp:Label></td></tr>
                     <tr><td colspan="2" style="border:1px solid #000; padding:15px; text-align:center; font-size:22px;">
                         <b>Staff Clo. Bal.  <asp:Label ID="lbldue" runat="server" Text="Label"></asp:Label> DR</b>
@@ -88,24 +86,23 @@
             <td style="border:1px solid #000; padding:5px;">Salary Advance</td>
             <td style="border:1px solid #000; padding:5px;">₹  <asp:Label ID="lblsalaryadv" runat="server" Text="Label"></asp:Label></td>
         </tr>
+          <tr>
+            <td style="border:1px solid #000; padding:5px;">ESI</td>
+            <td style="border:1px solid #000; padding:5px;">₹  <asp:Label ID="lblesi" runat="server" Text="Label"></asp:Label></td>
+        </tr>
         <tr>
             <td style="border:1px solid #000; padding:5px;"><b>Total Deductions</b></td>
             <td style="border:1px solid #000; padding:5px;"><b>₹  <asp:Label ID="lbltotaldesduct" runat="server" Text="Label"></asp:Label></b></td>
         </tr>
-        <tr>
-            <td style="border:1px solid #000; padding:5px;"><b>SALARY AFTER DEDUCTIONS</b></td>
-            <td style="border:1px solid #000; padding:5px;"><b>₹  <asp:Label ID="lblnetsalary" runat="server" Text="Label"></asp:Label></b></td>
-        </tr>
+      
         <tr>
             <td style="border:1px solid #000; padding:5px;"><b>NET TAKE HOME</b></td>
-            <td style="border:1px solid #000; padding:5px;"><b>₹ <asp:Label ID="lblnetsalary2" runat="server" Text="Label"></asp:Label></b></td>
+            <td style="border:1px solid #000; padding:5px;"><b>₹ <asp:Label ID="lblnetsalary" runat="server" Text="Label"></asp:Label></b></td>
         </tr>
     </table>
 
     <!-- Footer -->
-    <div style="padding:15px; text-align:right; font-size:18px;">
-        Three Thousand Seven Hundred Forty Only
-    </div>
+  
 
 </div>
     </form>

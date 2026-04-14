@@ -155,23 +155,29 @@ public partial class finalSalaryReport : System.Web.UI.Page
         if (txtempid.Text != "")
         {
             empid = "and empcode in (" + txtempid.Text + ")";
-
         }
+
         using (SqlConnection con = new SqlConnection(connStr))
         {
-            string sqlq = @"select a.empcode,a.name,a.deductionday,a.basicsalary,a.sunday,a.sundayamountextra,a.tea,a.Commission,
-a.extracommsion,a.grosssalary,a.ExtraAmountLess as AdvanceSalary,a.advanceamountcut,a.NetSalary,a.esicut,a.dueadvance, 
-(SELECT emptype FROM emplist WHERE empcode=a.empcode) AS emptype,  '" + ddlMonth.SelectedItem + @"' AS Month,
+            string sqlq = @"select a.empcode,a.name,a.deductionday,a.basicsalary,a.sunday,
+a.sundayamountextra,a.tea,a.Commission,
+a.extracommsion,a.grosssalary,a.ExtraAmountLess as AdvanceSalary,
+a.advanceamountcut,a.NetSalary,a.esicut,a.dueadvance, 
+(SELECT emptype FROM emplist WHERE empcode=a.empcode) AS emptype,  
+'" + ddlMonth.SelectedItem + @"' AS Month,
 '" + ddlYear.SelectedItem + @"' AS Year,
-                       
-                        (SELECT bankname FROM emplist WHERE empcode=a.empcode) AS bankname,
-                        (SELECT bankifsc FROM emplist WHERE empcode=a.empcode) AS bankifsc,
-                        (SELECT bankaccount FROM emplist WHERE empcode=a.empcode) AS bankaccount
-                        FROM finalsalaryreport AS a
-                        WHERE a.reportmonth='" + ddlMonth.SelectedItem.Text + @"'
-                        AND a.reportyear='" + ddlYear.SelectedItem.Text + @"'
-                        AND a.empcode IN
-                        (SELECT empcode FROM emplist WHERE emptype='" + txtemptype.Text.Trim() + "' " + empid + ")";
+
+(SELECT bankname FROM emplist WHERE empcode=a.empcode) AS bankname,
+(SELECT bankifsc FROM emplist WHERE empcode=a.empcode) AS bankifsc,
+
+'=""' + (SELECT bankaccount FROM emplist WHERE empcode=a.empcode) + '""' AS bankaccount
+
+FROM finalsalaryreport AS a
+WHERE a.reportmonth='" + ddlMonth.SelectedItem.Text + @"'
+AND a.reportyear='" + ddlYear.SelectedItem.Text + @"'
+AND a.empcode IN
+(SELECT empcode FROM emplist 
+ WHERE emptype='" + txtemptype.Text.Trim() + "' " + empid + ")";
 
             SqlDataAdapter da = new SqlDataAdapter(sqlq, con);
             DataTable dt = new DataTable();
@@ -196,6 +202,5 @@ a.extracommsion,a.grosssalary,a.ExtraAmountLess as AdvanceSalary,a.advanceamount
             Response.Flush();
             Response.End();
         }
-
     }
 }

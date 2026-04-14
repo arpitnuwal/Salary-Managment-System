@@ -32,7 +32,7 @@ public partial class Printslip : System.Web.UI.Page
 
 
         lblname.Text=dt.Rows[0]["name"].ToString();
-        lbladvacneamt.Text = dt.Rows[0]["dueadvance"].ToString();
+        lbladvacneamt.Text = dt.Rows[0]["advanceamountcut"].ToString();
 
         lblbasicpay.Text = dt.Rows[0]["basicsalary"].ToString();
 
@@ -46,12 +46,12 @@ public partial class Printslip : System.Web.UI.Page
 
         lblmmonthname.Text = dt.Rows[0]["reportmonth"].ToString();
 
+        lblesi.Text = dt.Rows[0]["esicut"].ToString();
 
+      
 
-        lblnetsalary.Text = dt.Rows[0]["NetSalary"].ToString();
-
-        lblnetsalary2.Text = dt.Rows[0]["NetSalary"].ToString();
-        lblsalaryadv.Text = dt.Rows[0]["name"].ToString();
+      //  lblnetsalary2.Text = dt.Rows[0]["NetSalary"].ToString();
+     
         lblsundayamount.Text = dt.Rows[0]["sundayamountextra"].ToString();
         lblsundaycount.Text = dt.Rows[0]["sunday"].ToString();
 
@@ -59,20 +59,20 @@ public partial class Printslip : System.Web.UI.Page
 
         lbltotalcomm.Text = dt.Rows[0]["Commission"].ToString();
 
-        lblsalaryadv.Text = dt.Rows[0]["advanceamountcut"].ToString();
+        lblsalaryadv.Text = dt.Rows[0]["ExtraAmountLess"].ToString();
       
         lbltea.Text = dt.Rows[0]["tea"].ToString();
     
-      //  lbltotaldesduct.Text = dt.Rows[0]["name"].ToString();
+      //lbltotaldesduct  .Text = dt.Rows[0]["name"].ToString();
 
 
         lbltotalextra.Text = dt.Rows[0]["grosssalary"].ToString();
 
-        lbltotalsalaryday.Text = dt.Rows[0]["name"].ToString();
+     
 
         lblyearname.Text = dt.Rows[0]["reportyear"].ToString();
 
-        
-     
+        lbltotaldesduct.Text=(Convert.ToInt32(lbladvacneamt.Text)+Convert.ToInt32(lblsalaryadv.Text)+Convert.ToInt32(lblesi.Text)).ToString();
+        lblnetsalary.Text = (Convert.ToInt32(lblgrosssalary.Text) - Convert.ToInt32(lbltotaldesduct.Text)).ToString();
     }
 }

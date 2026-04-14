@@ -197,20 +197,78 @@ protected void btnSave_Click(object sender, EventArgs e)
                 if (count == 0)
                     continue;
 
-                decimal dividedCommission = totalcommission / count;
+                List<string> folderEmpCodes = new List<string>();
+                List<string> normalEmpCodes = new List<string>();
 
                 foreach (string code in cleanCodes)
                 {
                     string empcode = code.PadLeft(5, '0');
 
+                    SqlCommand checkCmd = new SqlCommand(
+                        "SELECT folder FROM emplist WHERE empcode=@EmpCode", con);
+
+                    checkCmd.Parameters.AddWithValue("@EmpCode", empcode);
+
+                    object result = checkCmd.ExecuteScalar();
+
+                    if (result != null && result.ToString() == "1")
+                    {
+                        folderEmpCodes.Add(empcode);
+                    }
+                    else
+                    {
+                        normalEmpCodes.Add(empcode);
+                    }
+                }
+
+                // 20% for folder=1 employees
+                decimal folderCommission = totalcommission * 0.20m;
+
+                // 80% for remaining
+                decimal remainingCommission = totalcommission - folderCommission;
+
+                // folder वाले को equally
+                decimal folderShare = folderEmpCodes.Count > 0
+                    ? folderCommission / folderEmpCodes.Count
+                    : 0;
+
+                // बाकी employees को equally
+                decimal normalShare = normalEmpCodes.Count > 0
+                    ? remainingCommission / normalEmpCodes.Count
+                    : 0;
+
+                // Insert folder employees
+                foreach (string empcode in folderEmpCodes)
+                {
                     SqlCommand sql = new SqlCommand(
-                        "INSERT INTO Commission(EmpCode, Amount, CommissionAmount,CommissionDate, CreatedDate,sinleamount) " +
-                        "VALUES(@EmpCode, @Amount, @CommissionAmount,'" + createdDate + "', DATEFROMPARTS(@Year,@Month,1),'" + mrp + "')",
+                        "INSERT INTO Commission(EmpCode, Amount, CommissionAmount, CommissionDate, CreatedDate, sinleamount) " +
+                        "VALUES(@EmpCode, @Amount, @CommissionAmount, @CommissionDate, DATEFROMPARTS(@Year,@Month,1), @Mrp)",
                         con);
 
                     sql.Parameters.AddWithValue("@EmpCode", empcode);
                     sql.Parameters.AddWithValue("@Amount", amount);
-                    sql.Parameters.AddWithValue("@CommissionAmount", dividedCommission);
+                    sql.Parameters.AddWithValue("@CommissionAmount", folderShare);
+                    sql.Parameters.AddWithValue("@CommissionDate", createdDate);
+                    sql.Parameters.AddWithValue("@Mrp", mrp);
+                    sql.Parameters.AddWithValue("@Year", ddlYear.SelectedValue);
+                    sql.Parameters.AddWithValue("@Month", ddlMonth.SelectedValue);
+
+                    sql.ExecuteNonQuery();
+                }
+
+                // Insert normal employees
+                foreach (string empcode in normalEmpCodes)
+                {
+                    SqlCommand sql = new SqlCommand(
+                        "INSERT INTO Commission(EmpCode, Amount, CommissionAmount, CommissionDate, CreatedDate, sinleamount) " +
+                        "VALUES(@EmpCode, @Amount, @CommissionAmount, @CommissionDate, DATEFROMPARTS(@Year,@Month,1), @Mrp)",
+                        con);
+
+                    sql.Parameters.AddWithValue("@EmpCode", empcode);
+                    sql.Parameters.AddWithValue("@Amount", amount);
+                    sql.Parameters.AddWithValue("@CommissionAmount", normalShare);
+                    sql.Parameters.AddWithValue("@CommissionDate", createdDate);
+                    sql.Parameters.AddWithValue("@Mrp", mrp);
                     sql.Parameters.AddWithValue("@Year", ddlYear.SelectedValue);
                     sql.Parameters.AddWithValue("@Month", ddlMonth.SelectedValue);
 
