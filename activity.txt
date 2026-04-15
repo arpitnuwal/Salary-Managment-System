@@ -236,3 +236,4 @@
 ✔ Update README - 2026-04-21T09:58:43.605Z
 ✔ Enhance responsiveness - 2026-04-21T09:58:46.211Z
 ✔ Improve UI layout - 2026-04-21T09:58:49.274Z
+✔ Add validation - 2026-04-21T09:58:51.108Z
