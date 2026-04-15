@@ -889,19 +889,7 @@ public partial class _Default : System.Web.UI.Page
 
 
             con.Open();
-            //SqlCommand cmddelete = new SqlCommand("delete  from finalsalaryreport   where reportmonth='"+monthName+"' and	reportyear='"+year+"'", con);
-            //cmddelete.ExecuteNonQuery();
-
-
-
-
-
-
-
-
-
-
-
+            
 
 
             foreach (ListViewItem item in lvEmployees.Items)
