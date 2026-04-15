@@ -449,6 +449,7 @@
                <li><a href="SalaryReport.aspx"><i class="fa-solid fa-id-card"></i> Salary Report</a></li>
 
                <li><a href="finalSalaryReport.aspx"><i class="fa-solid fa-id-card"></i>Final Salary Report</a></li>
+              <li><a href="backup.aspx" class="logout"><i class="fa-solid fa-right-from-bracket"></i> Backup</a></li>
             <li><a href="Login.aspx" class="logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
         </ul>
     </nav>

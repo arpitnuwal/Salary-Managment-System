@@ -221,21 +221,30 @@ protected void btnSave_Click(object sender, EventArgs e)
                     }
                 }
 
-                // 20% for folder=1 employees
-                decimal folderCommission = totalcommission * 0.20m;
+                decimal folderCommission = 0m;
+                decimal remainingCommission = 0m;
 
-                // 80% for remaining
-                decimal remainingCommission = totalcommission - folderCommission;
+                // अगर folder वाले employee हैं तभी 20% cut होगा
+                if (folderEmpCodes.Count > 0)
+                {
+                    folderCommission = totalcommission * 0.20m;
+                    remainingCommission = totalcommission - folderCommission;
+                }
+                else
+                {
+                    // अगर कोई folder employee नहीं है तो पूरा amount normal को
+                    remainingCommission = totalcommission;
+                }
 
-                // folder वाले को equally
+                // folder वाले employees में बराबर बाँटो
                 decimal folderShare = folderEmpCodes.Count > 0
                     ? folderCommission / folderEmpCodes.Count
-                    : 0;
+                    : 0m;
 
-                // बाकी employees को equally
+                // normal employees में बराबर बाँटो
                 decimal normalShare = normalEmpCodes.Count > 0
                     ? remainingCommission / normalEmpCodes.Count
-                    : 0;
+                    : 0m;
 
                 // Insert folder employees
                 foreach (string empcode in folderEmpCodes)

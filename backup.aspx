@@ -51,20 +51,22 @@
                     
                             <label for="txtEmpName">Query</label>
                          
-                                
-                                <asp:TextBox ID="txtEmpName"
-                                             runat="server"
-                                            TextMode="MultiLine" Rows="10" Style="height:500px;width:1000px"  />
-                            
-                            
-                      
+                                <asp:Button ID="btnBackup" runat="server" Text="Generate Insert Script"
+    OnClick="btnBackup_Click" />
 
+<asp:TextBox ID="txtOutput" runat="server" TextMode="MultiLine"
+    Width="100%" Height="400px"></asp:TextBox>
+                      
+                        <asp:Label ID="Label1" runat="server" Text=""></asp:Label>
                         <%-- Employee Salary --%>
                         
 
+<asp:Button ID="Button1" runat="server" Text="Insert Script"
+    OnClick="Button1_Click" />
+
 
                             
-                         
+                        <asp:Label ID="lblMsg" runat="server"  ForeColor="Red"></asp:Label>             
 
                       
 
