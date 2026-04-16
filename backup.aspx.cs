@@ -5,6 +5,8 @@ using System.Data;
 using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Mail;
 using System.Text;
 using System.Web;
 using System.Web.UI;
@@ -21,7 +23,6 @@ public partial class backup : System.Web.UI.Page
 
 
      string conStr = ConfigurationManager.ConnectionStrings["db"].ConnectionString;
-
       protected void btnBackup_Click(object sender, EventArgs e)
     {
         string connectionString = ConfigurationManager.ConnectionStrings["db"].ConnectionString;
@@ -74,6 +75,10 @@ public partial class backup : System.Web.UI.Page
                     if (val == DBNull.Value)
                     {
                         sb.Append("NULL");
+                    }
+                    else if (dt.Columns[i].DataType == typeof(bool))
+                    {
+                        sb.Append((bool)val ? "1" : "0");
                     }
                     else if (dt.Columns[i].DataType == typeof(string) ||
                              dt.Columns[i].DataType == typeof(DateTime))
@@ -149,6 +154,94 @@ public partial class backup : System.Web.UI.Page
                   lblMsg.Text = ex.Message;
               }
           }
+      }
+
+
+      protected void Button2_Click(object sender, EventArgs e)
+      {
+          string connectionString = ConfigurationManager.ConnectionStrings["db"].ConnectionString;
+          StringBuilder sb = new StringBuilder();
+
+          using (SqlConnection con = new SqlConnection(connectionString))
+          {
+              con.Open();
+
+              SqlCommand cmdTables = new SqlCommand(
+                  "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE'",
+                  con);
+
+              SqlDataReader drTables = cmdTables.ExecuteReader();
+
+              DataTable dtTables = new DataTable();
+              dtTables.Load(drTables);
+
+              foreach (DataRow tableRow in dtTables.Rows)
+              {
+                  string tableName = tableRow["TABLE_NAME"].ToString();
+
+                  SqlDataAdapter da = new SqlDataAdapter("SELECT * FROM [" + tableName + "]", con);
+                  DataTable dt = new DataTable();
+                  da.Fill(dt);
+
+                  foreach (DataRow row in dt.Rows)
+                  {
+                      sb.Append("INSERT INTO [" + tableName + "] (");
+
+                      for (int i = 0; i < dt.Columns.Count; i++)
+                      {
+                          sb.Append("[" + dt.Columns[i].ColumnName + "]");
+                          if (i < dt.Columns.Count - 1)
+                              sb.Append(", ");
+                      }
+
+                      sb.Append(") VALUES (");
+
+                      for (int i = 0; i < dt.Columns.Count; i++)
+                      {
+                          object val = row[i];
+
+                          if (val == DBNull.Value)
+                              sb.Append("NULL");
+                          else if (dt.Columns[i].DataType == typeof(bool))
+                              sb.Append((bool)val ? "1" : "0");
+                          else if (dt.Columns[i].DataType == typeof(string) ||
+                                   dt.Columns[i].DataType == typeof(DateTime))
+                              sb.Append("'" + val.ToString().Replace("'", "''") + "'");
+                          else
+                              sb.Append(val.ToString());
+
+                          if (i < dt.Columns.Count - 1)
+                              sb.Append(", ");
+                      }
+
+                      sb.AppendLine(");");
+                  }
+
+                  sb.AppendLine();
+              }
+          }
+
+          // SQL file create in memory
+          byte[] fileBytes = Encoding.UTF8.GetBytes(sb.ToString());
+
+          // Send Email
+          MailMessage mail = new MailMessage();
+          mail.From = new MailAddress("spmplbackup@gmail.com");
+          mail.To.Add("spmplbackup@gmail.com");
+          mail.Subject = "Dangi Fashion Software Database Backup File - Date: " + DateTime.Now.ToString("dd/MM/yyyy");
+          mail.Body = "Please find attached SQL backup file.";
+
+          MemoryStream ms = new MemoryStream(fileBytes);
+          Attachment attachment = new Attachment(ms, "backup.sql", "text/plain");
+          mail.Attachments.Add(attachment);
+
+          SmtpClient smtp = new SmtpClient("smtp.gmail.com", 587);
+          smtp.Credentials = new NetworkCredential("spmplbackup@gmail.com", "xertmjlovcqngtth");
+          smtp.EnableSsl = true;
+
+          smtp.Send(mail);
+
+          Response.Write("Backup file sent successfully to email.");
       }
 }
 

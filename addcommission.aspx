@@ -79,7 +79,7 @@
                         <%-- Buttons --%>
                         <div class="btn-row">
 
-                            <asp:Label ID="Label1" runat="server" Text=""></asp:Label><br />
+                            <asp:Label ID="Label1" runat="server" Text="" ForeColor="Red"></asp:Label><br />
 
                             <asp:Button ID="btnSave"
                                         runat="server"

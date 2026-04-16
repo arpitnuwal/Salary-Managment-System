@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
@@ -9,6 +10,7 @@ using System.Web.UI.WebControls;
 
 public partial class _Default : System.Web.UI.Page
 {
+    string connStr = ConfigurationManager.ConnectionStrings["db"].ConnectionString;
     protected void Page_Load(object sender, EventArgs e)
     {
         if (!IsPostBack)
@@ -50,8 +52,7 @@ public partial class _Default : System.Web.UI.Page
 
     private bool IsAbsentDay(string empCode, DateTime checkDate)
     {
-        using (SqlConnection con = new SqlConnection(
-            @"Data Source=mssql2017.adnshost.com,1533;Initial Catalog=testdb;User ID=testdb;Password=testdb@2575"))
+        using (SqlConnection con = new SqlConnection(connStr))
         {
             con.Open();
             string sql = "SELECT COUNT(*) FROM Attendance "
@@ -95,7 +96,7 @@ public partial class _Default : System.Web.UI.Page
             empid2 = "and emcode in (" + txtempid.Text + ")";
 
         }
-        SqlConnection con = new SqlConnection("Data Source=mssql2017.adnshost.com,1533;Initial Catalog=testdb;User ID=testdb;Password=testdb@2575");
+        SqlConnection con = new SqlConnection(connStr);
 
         con.Open();
         SqlCommand cmddelete = new SqlCommand("delete  from AttendanceDeductionLog   where   YEAR(CreatedOn) = " + ddlYear.SelectedValue + "   AND MONTH(CreatedOn) = " + ddlMonth.SelectedValue + " " + empid + ";delete  from commsioncut   where   YEAR(CreatedOn) = " + ddlYear.SelectedValue + "   AND MONTH(CreatedOn) = " + ddlMonth.SelectedValue + " " + empid2 + ";delete  from SundayAttendanceLog   where   YEAR(CreatedOn) = " + ddlYear.SelectedValue + "   AND MONTH(CreatedOn) = " + ddlMonth.SelectedValue + " " + empid + "", con);
@@ -132,7 +133,7 @@ public partial class _Default : System.Web.UI.Page
 
 
 
-        SqlCommand empCmd = new SqlCommand("SELECT emptype,ID,empcode,empname,empsalary,esi,sundayamountgive,gender,rts,status,advanceamount FROM [emplist]  where 1=1   " + empid + "    ORDER BY id  DESC", con);
+        SqlCommand empCmd = new SqlCommand("SELECT emptype,ID,empcode,empname,empsalary,esi,sundayamountgive,gender,rts,status,advanceamount FROM [emplist]  where 1=1  and  emptype='"+txtemptype.Text.Trim()+"' " + empid + "    ORDER BY id  DESC", con);
         SqlDataReader empDr = empCmd.ExecuteReader();
         //  
         List<dynamic> employees = new List<dynamic>();
@@ -199,8 +200,7 @@ public partial class _Default : System.Web.UI.Page
 
                 if (!officeClosedDayCache.ContainsKey(attDate.Date))
                 {
-                    using (SqlConnection conCheck = new SqlConnection(
-                        @"Data Source=mssql2017.adnshost.com,1533;Initial Catalog=testdb;User ID=testdb;Password=testdb@2575"))
+                    using (SqlConnection conCheck = new SqlConnection(connStr))
                     {
                         conCheck.Open();
 
@@ -245,20 +245,37 @@ public partial class _Default : System.Web.UI.Page
                         string inTimeValue = intime.ToString();
                         string outTimeValue = outtime.ToString();
                         string breakTimeValue = breaktime.ToString();
-                        using (SqlConnection conInsert = new SqlConnection(
-                            @"Data Source=mssql2017.adnshost.com,1533;Initial Catalog=testdb;User ID=testdb;Password=testdb@2575"))
+                        using (SqlConnection conInsert = new SqlConnection(connStr))
                         {
                             conInsert.Open();
 
                             SqlCommand cmdextra = new SqlCommand(
-                                "INSERT INTO AttendanceDeductionLog " +
-                                "(EmpCode, AttDate, InTime, OutTime, BreakTime, Deduction, DeductionType, Reason, CreatedOn) " +
-                                "VALUES ('" + empCode + "', '" + attDate + "', '" + inTimeValue + "', '" + outTimeValue + "', '" + breakTimeValue + "', '" + holiday + "', 'Full Day', 'SandwichHoliday  cut', DATEFROMPARTS("+ddlYear.SelectedValue+","+ddlMonth.SelectedValue+",1))",
+                                @"INSERT INTO AttendanceDeductionLog
+          (id, EmpCode, AttDate, InTime, OutTime, BreakTime, Deduction, DeductionType, Reason, CreatedOn)
+          SELECT 
+              ISNULL(MAX(id), 0) + 1,
+              @EmpCode,
+              @AttDate,
+              @InTime,
+              @OutTime,
+              @BreakTime,
+              @Deduction,
+              @DeductionType,
+              @Reason,
+              DATEFROMPARTS(@Year, @Month, 1)
+          FROM AttendanceDeductionLog",
                                 conInsert);
 
-                        
-                           
-                          
+                            cmdextra.Parameters.AddWithValue("@EmpCode", empCode);
+                            cmdextra.Parameters.AddWithValue("@AttDate", attDate);
+                            cmdextra.Parameters.AddWithValue("@InTime", inTimeValue);
+                            cmdextra.Parameters.AddWithValue("@OutTime", outTimeValue);
+                            cmdextra.Parameters.AddWithValue("@BreakTime", breakTimeValue);
+                            cmdextra.Parameters.AddWithValue("@Deduction", holiday);
+                            cmdextra.Parameters.AddWithValue("@DeductionType", "Full Day");
+                            cmdextra.Parameters.AddWithValue("@Reason", "SandwichHoliday cut");
+                            cmdextra.Parameters.AddWithValue("@Year", Convert.ToInt32(ddlYear.SelectedValue));
+                            cmdextra.Parameters.AddWithValue("@Month", Convert.ToInt32(ddlMonth.SelectedValue));
 
                             cmdextra.ExecuteNonQuery();
                         }
@@ -272,7 +289,7 @@ public partial class _Default : System.Web.UI.Page
 
 
                 TimeSpan minInTime = new TimeSpan(0, 0, 0);
-                using (SqlConnection conMin = new SqlConnection("Data Source=mssql2017.adnshost.com,1533;Initial Catalog=testdb;User ID=testdb;Password=testdb@2575"))
+                using (SqlConnection conMin = new SqlConnection(connStr))
                 {
                     conMin.Open();
 
@@ -297,7 +314,7 @@ public partial class _Default : System.Web.UI.Page
                     isLateOpenDay = true;
                     if (isLateOpenDay == true)
                     {
-                        SqlCommand cmdlateopen = new SqlCommand("insert into LateOpenDay values ('" + chkdate + "',DATEFROMPARTS("+ddlYear.SelectedValue+","+ddlMonth.SelectedValue+",1))", con);
+                        SqlCommand cmdlateopen = new SqlCommand("insert into LateOpenDay values (SELECT ISNULL(MAX(id),0) + 1,'" + chkdate + "',DATEFROMPARTS("+ddlYear.SelectedValue+","+ddlMonth.SelectedValue+",1))", con);
                         cmdlateopen.ExecuteNonQuery();
 
                     }
@@ -392,15 +409,23 @@ public partial class _Default : System.Web.UI.Page
                             }
                         }
 
-                        using (SqlConnection conSunday = new SqlConnection(
-                            @"Data Source=mssql2017.adnshost.com,1533;Initial Catalog=testdb;User ID=testdb;Password=testdb@2575"))
+                        using (SqlConnection conSunday = new SqlConnection(connStr))
                         {
                             conSunday.Open();
 
                             SqlCommand cmdSunday = new SqlCommand(
-                                "INSERT INTO SundayAttendanceLog " +
-                                "(EmpCode, AttDate, InTime, OutTime, BreakTime, CreatedOn,remark) " +
-                                "VALUES (@EmpCode, @AttDate, @InTime, @OutTime, @BreakTime, DATEFROMPARTS(@Year,@Month,1),'" + sundayremark + "')",
+                                @"INSERT INTO SundayAttendanceLog
+          (id, EmpCode, AttDate, InTime, OutTime, BreakTime, CreatedOn, remark)
+          SELECT 
+              ISNULL(MAX(id), 0) + 1,
+              @EmpCode,
+              @AttDate,
+              @InTime,
+              @OutTime,
+              @BreakTime,
+              DATEFROMPARTS(@Year, @Month, 1),
+              @Remark
+          FROM SundayAttendanceLog",
                                 conSunday);
 
                             cmdSunday.Parameters.AddWithValue("@EmpCode", empCode);
@@ -408,8 +433,10 @@ public partial class _Default : System.Web.UI.Page
                             cmdSunday.Parameters.AddWithValue("@InTime", inTimeValue);
                             cmdSunday.Parameters.AddWithValue("@OutTime", outTimeValue);
                             cmdSunday.Parameters.AddWithValue("@BreakTime", breakTimeValue);
-                            cmdSunday.Parameters.AddWithValue("@Year", ddlYear.SelectedValue);
-                            cmdSunday.Parameters.AddWithValue("@Month", ddlMonth.SelectedValue);
+                            cmdSunday.Parameters.AddWithValue("@Year", Convert.ToInt32(ddlYear.SelectedValue));
+                            cmdSunday.Parameters.AddWithValue("@Month", Convert.ToInt32(ddlMonth.SelectedValue));
+                            cmdSunday.Parameters.AddWithValue("@Remark", sundayremark);
+
                             cmdSunday.ExecuteNonQuery();
                         }
                     }
@@ -454,16 +481,16 @@ public partial class _Default : System.Web.UI.Page
                                 string outTimeValue = outOk ? outTime.ToString() : "";
                                 string breakTimeValue = breakOk ? breakTime.ToString() : "";
 
-                                using (SqlConnection conInsert = new SqlConnection(
-                                    @"Data Source=mssql2017.adnshost.com,1533;Initial Catalog=testdb;User ID=testdb;Password=testdb@2575"))
+                                using (SqlConnection conInsert = new SqlConnection(connStr))
                                 {
                                     conInsert.Open();
 
                                     SqlCommand cmdextra = new SqlCommand(
-                                        "INSERT INTO AttendanceDeductionLog " +
-                                        "(EmpCode, AttDate, InTime, OutTime, BreakTime, Deduction, DeductionType, Reason, CreatedOn) " +
-                                        "VALUES (@EmpCode, @AttDate, @InTime, @OutTime, @BreakTime, @Deduction, @DeductionType, @Reason, DATEFROMPARTS(@Year,@Month,1))",
-                                        conInsert);
+     "INSERT INTO AttendanceDeductionLog " +
+     "(id, EmpCode, AttDate, InTime, OutTime, BreakTime, Deduction, DeductionType, Reason, CreatedOn) " +
+     "SELECT ISNULL(MAX(id),0) + 1, @EmpCode, @AttDate, @InTime, @OutTime, @BreakTime, @Deduction, @DeductionType, @Reason, DATEFROMPARTS(@Year,@Month,1) " +
+     "FROM AttendanceDeductionLog",
+     conInsert);
 
                                     cmdextra.Parameters.AddWithValue("@EmpCode", empCode);
                                     cmdextra.Parameters.AddWithValue("@AttDate", attDate);
@@ -492,15 +519,23 @@ public partial class _Default : System.Web.UI.Page
 
                         {
                             sundayremark = "Sunday Leave";
-                            using (SqlConnection conSunday = new SqlConnection(
-                              @"Data Source=mssql2017.adnshost.com,1533;Initial Catalog=testdb;User ID=testdb;Password=testdb@2575"))
+                            using (SqlConnection conSunday = new SqlConnection(connStr))
                             {
                                 conSunday.Open();
 
                                 SqlCommand cmdSunday = new SqlCommand(
-                                    "INSERT INTO SundayAttendanceLog " +
-                                    "(EmpCode, AttDate, InTime, OutTime, BreakTime, CreatedOn,remark) " +
-                                    "VALUES (@EmpCode, @AttDate, @InTime, @OutTime, @BreakTime, DATEFROMPARTS(@Year,@Month,1),'" + sundayremark + "')",
+                                    @"INSERT INTO SundayAttendanceLog
+          (id, EmpCode, AttDate, InTime, OutTime, BreakTime, CreatedOn, remark)
+          SELECT 
+              ISNULL(MAX(id), 0) + 1,
+              @EmpCode,
+              @AttDate,
+              @InTime,
+              @OutTime,
+              @BreakTime,
+              DATEFROMPARTS(@Year, @Month, 1),
+              @Remark
+          FROM SundayAttendanceLog",
                                     conSunday);
 
                                 cmdSunday.Parameters.AddWithValue("@EmpCode", empCode);
@@ -508,10 +543,11 @@ public partial class _Default : System.Web.UI.Page
                                 cmdSunday.Parameters.AddWithValue("@InTime", inTimeValuesunday);
                                 cmdSunday.Parameters.AddWithValue("@OutTime", outTimeValuesunday);
                                 cmdSunday.Parameters.AddWithValue("@BreakTime", breakTimeValusundaye);
-                                cmdSunday.Parameters.AddWithValue("@Year", ddlYear.SelectedValue);
-                                cmdSunday.Parameters.AddWithValue("@Month", ddlMonth.SelectedValue);
-                                cmdSunday.ExecuteNonQuery();
+                                cmdSunday.Parameters.AddWithValue("@Year", Convert.ToInt32(ddlYear.SelectedValue));
+                                cmdSunday.Parameters.AddWithValue("@Month", Convert.ToInt32(ddlMonth.SelectedValue));
+                                cmdSunday.Parameters.AddWithValue("@Remark", sundayremark);
 
+                                cmdSunday.ExecuteNonQuery();
 
                                 holiday += 1;
                             }
@@ -596,7 +632,7 @@ public partial class _Default : System.Web.UI.Page
                 TimeSpan firstPunchTime = TimeSpan.Zero;
                 TimeSpan lateLimit = TimeSpan.Zero;
 
-                using (SqlConnection conlateee = new SqlConnection(@"Data Source=mssql2017.adnshost.com,1533;Initial Catalog=testdb;User ID=testdb;Password=testdb@2575"))
+                using (SqlConnection conlateee = new SqlConnection(connStr))
                 {
                     conlateee.Open();
                     string sql = @"";
@@ -687,9 +723,8 @@ public partial class _Default : System.Web.UI.Page
                   else
     
                 {
-                    double commissiondailytesrt = 0; 
-                    using (SqlConnection conInsert = new SqlConnection(
-                       @"Data Source=mssql2017.adnshost.com,1533;Initial Catalog=testdb;User ID=testdb;Password=testdb@2575"))
+                    double commissiondailytesrt = 0;
+                    using (SqlConnection conInsert = new SqlConnection(connStr))
                     {
                         conInsert.Open();
 
@@ -706,8 +741,7 @@ public partial class _Default : System.Web.UI.Page
                         commissiondailytesrt = commissiondaily;
                     }
 
-                    using (SqlConnection conInsert = new SqlConnection(
-                     @"Data Source=mssql2017.adnshost.com,1533;Initial Catalog=testdb;User ID=testdb;Password=testdb@2575"))
+                    using (SqlConnection conInsert = new SqlConnection(connStr))
                     {
                         conInsert.Open();
 
@@ -771,17 +805,17 @@ public partial class _Default : System.Web.UI.Page
                         }
                     }
 
-                    
-                    using (SqlConnection conInsert = new SqlConnection(
-                        @"Data Source=mssql2017.adnshost.com,1533;Initial Catalog=testdb;User ID=testdb;Password=testdb@2575"))
+
+                    using (SqlConnection conInsert = new SqlConnection(connStr))
                     {
                         conInsert.Open();
 
                         SqlCommand cmdextra = new SqlCommand(
-                            "INSERT INTO AttendanceDeductionLog " +
-                            "(EmpCode, AttDate, InTime, OutTime, BreakTime, Deduction, DeductionType, Reason, CreatedOn) " +
-                            "VALUES (@EmpCode, @AttDate, @InTime, @OutTime, @BreakTime, @Deduction, @DeductionType, @Reason, DATEFROMPARTS(@Year,@Month,1))",
-                            conInsert);
+      "INSERT INTO AttendanceDeductionLog " +
+      "(id, EmpCode, AttDate, InTime, OutTime, BreakTime, Deduction, DeductionType, Reason, CreatedOn) " +
+      "SELECT ISNULL(MAX(id), 0) + 1, @EmpCode, @AttDate, @InTime, @OutTime, @BreakTime, @Deduction, @DeductionType, @Reason, DATEFROMPARTS(@Year, @Month, 1) " +
+      "FROM AttendanceDeductionLog",
+      conInsert);
 
                         cmdextra.Parameters.AddWithValue("@EmpCode", empCode);
                         cmdextra.Parameters.AddWithValue("@AttDate", attDate);
@@ -883,7 +917,7 @@ public partial class _Default : System.Web.UI.Page
 
         // Get year as string
         string year =ddlYear.SelectedItem.ToString();
-        using (SqlConnection con = new SqlConnection("Data Source=mssql2017.adnshost.com,1533;Initial Catalog=testdb;User ID=testdb;Password=testdb@2575"))
+        using (SqlConnection con = new SqlConnection(connStr))
         {
 
 
@@ -940,10 +974,15 @@ public partial class _Default : System.Web.UI.Page
                 double grosssalarycheck = grossSalary + Convert.ToDouble(tea) + Convert.ToDouble(extraComm) + Convert.ToDouble(commission);
                 double finalSalarycheck = 0;
 
-                if (Convert.ToInt32(esiCut)>0)
+                if (Convert.ToInt32(esiCut) > 0)
                 {
                     esiCutnew = grosssalarycheck * 0.0075; // 0.25%
                     finalSalarycheck = grosssalarycheck - esiCut;
+                }
+                else
+                {
+
+                    finalSalarycheck = grosssalarycheck;
                 }
 
 
@@ -959,16 +998,53 @@ public partial class _Default : System.Web.UI.Page
 
 
 
-                SqlCommand cmd = new SqlCommand(@"INSERT INTO finalsalaryreport
-                (empcode,Name,deductionday,sunday,sundayamountextra,esicut,tea,extracommsion,grosssalary,Commission,advanceamountcut,dueadvance,NetSalary,reportmonth,reportyear,rts,ExtraAmountLess,basicsalary)
-                VALUES
-                ('" + empCode + "','" + empName + "','" + deductionDays + "','" + sundayWorked + "'," + sundayText + ",'" + esiCutnew + "','" + tea + "','" + extraComm + "'," + grosssalarycheck + ",'" + commission + "','" + advance + "','" + dueAdvance + "','" + finalSalarycheck + "','" + monthName + "','" + year + "',getdate(),'" + extraLess + "','" + Litbasicsalary + "')", con);
+                SqlCommand cmd = new SqlCommand(@"
+    INSERT INTO finalsalaryreport
+    (id, empcode, Name, deductionday, sunday, sundayamountextra, esicut, tea, extracommsion, grosssalary, Commission, advanceamountcut, dueadvance, NetSalary, reportmonth, reportyear, rts, ExtraAmountLess, basicsalary)
+    SELECT 
+        ISNULL(MAX(id), 0) + 1,
+        @empcode,
+        @Name,
+        @deductionday,
+        @sunday,
+        @sundayamountextra,
+        @esicut,
+        @tea,
+        @extracommsion,
+        @grosssalary,
+        @Commission,
+        @advanceamountcut,
+        @dueadvance,
+        @NetSalary,
+        @reportmonth,
+        @reportyear,
+        GETDATE(),
+        @ExtraAmountLess,
+        @basicsalary
+    FROM finalsalaryreport", con);
 
-          
+                cmd.Parameters.AddWithValue("@empcode", empCode);
+                cmd.Parameters.AddWithValue("@Name", empName);
+                cmd.Parameters.AddWithValue("@deductionday", deductionDays);
+                cmd.Parameters.AddWithValue("@sunday", sundayWorked);
+                cmd.Parameters.AddWithValue("@sundayamountextra", sundayText);
+                cmd.Parameters.AddWithValue("@esicut", esiCutnew);
+                cmd.Parameters.AddWithValue("@tea", tea);
+                cmd.Parameters.AddWithValue("@extracommsion", extraComm);
+                cmd.Parameters.AddWithValue("@grosssalary", grosssalarycheck);
+                cmd.Parameters.AddWithValue("@Commission", commission);
+                cmd.Parameters.AddWithValue("@advanceamountcut", advance);
+                cmd.Parameters.AddWithValue("@dueadvance", dueAdvance);
+                cmd.Parameters.AddWithValue("@NetSalary", finalSalarycheck);
+                cmd.Parameters.AddWithValue("@reportmonth", monthName);
+                cmd.Parameters.AddWithValue("@reportyear", year);
+                cmd.Parameters.AddWithValue("@ExtraAmountLess", extraLess);
+                cmd.Parameters.AddWithValue("@basicsalary", Litbasicsalary);
+
+                cmd.ExecuteNonQuery();
                
               
-                cmd.ExecuteNonQuery();
-
+            
 
 
                 SqlCommand cmdadv = new SqlCommand("update emplist set advanceamount=advanceamount-" + advance + " where empcode='" + empCode + "'", con);

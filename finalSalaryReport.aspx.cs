@@ -78,7 +78,7 @@ public partial class finalSalaryReport : System.Web.UI.Page
 
         // Get year as string
         string year = attendanceDate.Year.ToString();
-        using (SqlConnection con = new SqlConnection("Data Source=mssql2017.adnshost.com,1533;Initial Catalog=testdb;User ID=testdb;Password=testdb@2575"))
+        using (SqlConnection con = new SqlConnection(connStr))
         {
             con.Open();
             SqlCommand cmddelete = new SqlCommand("delete  from finalsalaryreport   where reportmonth='"+monthName+"' and	reportyear='"+year+"'", con);

@@ -15,6 +15,7 @@ using System.Web.UI.WebControls;
 
 public partial class addAttendance : System.Web.UI.Page
 {
+    string conStr = ConfigurationManager.ConnectionStrings["db"].ConnectionString;
     protected void Page_Load(object sender, EventArgs e)
     {
         if (!IsPostBack)
@@ -74,8 +75,7 @@ protected void btnSave_Click(object sender, EventArgs e)
 
         ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
-        using (SqlConnection sql = new SqlConnection(
-            "Data Source=mssql2017.adnshost.com,1533;Initial Catalog=testdb;User ID=testdb;Password=testdb@2575"))
+        using (SqlConnection sql = new SqlConnection(conStr))
         {
             sql.Open();
 
@@ -192,14 +192,20 @@ protected void btnSave_Click(object sender, EventArgs e)
                     string breakTime = totalBreak.ToString(@"hh\:mm");
 
                     SqlCommand insertCmd = new SqlCommand(
-                        @"INSERT INTO Attendance
-                        (EmpCode, AttDate, Shift, InTime, OutTime, BreakTime, rts)
-                        VALUES
-                        (@EmpCode, @AttDate, @Shift, @InTime, @OutTime, @BreakTime,
-                         DATEFROMPARTS(@Year, @Month, 1))", sql);
+      @"INSERT INTO Attendance
+      (id, EmpCode, AttDate, Shift, InTime, OutTime, BreakTime, rts)
+      SELECT 
+          ISNULL(MAX(id),0) + 1,
+          @EmpCode,
+          @AttDate,
+          @Shift,
+          @InTime,
+          @OutTime,
+          @BreakTime,
+          DATEFROMPARTS(@Year, @Month, 1)
+      FROM Attendance", sql);
 
                     insertCmd.Parameters.AddWithValue("@EmpCode", currentEmpCode);
-                
                     insertCmd.Parameters.AddWithValue("@AttDate", attDate);
                     insertCmd.Parameters.AddWithValue("@Shift", shift);
                     insertCmd.Parameters.AddWithValue("@InTime", inTime);

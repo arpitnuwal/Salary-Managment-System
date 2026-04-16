@@ -15,6 +15,7 @@ using System.Web.UI.WebControls;
 
 public partial class addcommission : System.Web.UI.Page
 {
+    string conStr = ConfigurationManager.ConnectionStrings["db"].ConnectionString;
     protected void Page_Load(object sender, EventArgs e)
     {
         if (!IsPostBack)
@@ -58,7 +59,7 @@ protected void btnSave_Click(object sender, EventArgs e)
 {
     try
     {
-        string conStr = "Data Source=mssql2017.adnshost.com,1533;Initial Catalog=testdb;User ID=testdb;Password=testdb@2575";
+       // string conStr = "Data Source=mssql2017.adnshost.com,1533;Initial Catalog=testdb;User ID=testdb;Password=testdb@2575";
 
         using (SqlConnection newcon = new SqlConnection(conStr))
         {
@@ -250,17 +251,18 @@ protected void btnSave_Click(object sender, EventArgs e)
                 foreach (string empcode in folderEmpCodes)
                 {
                     SqlCommand sql = new SqlCommand(
-                        "INSERT INTO Commission(EmpCode, Amount, CommissionAmount, CommissionDate, CreatedDate, sinleamount) " +
-                        "VALUES(@EmpCode, @Amount, @CommissionAmount, @CommissionDate, DATEFROMPARTS(@Year,@Month,1), @Mrp)",
-                        con);
+      "INSERT INTO Commission(id, EmpCode, Amount, CommissionAmount, CommissionDate, CreatedDate, sinleamount) " +
+      "SELECT ISNULL(MAX(id),0)+1, @EmpCode, @Amount, @CommissionAmount, @CommissionDate, DATEFROMPARTS(@Year,@Month,1), @SingleAmount " +
+      "FROM Commission",
+      con);
 
                     sql.Parameters.AddWithValue("@EmpCode", empcode);
                     sql.Parameters.AddWithValue("@Amount", amount);
                     sql.Parameters.AddWithValue("@CommissionAmount", folderShare);
                     sql.Parameters.AddWithValue("@CommissionDate", createdDate);
-                    sql.Parameters.AddWithValue("@Mrp", mrp);
                     sql.Parameters.AddWithValue("@Year", ddlYear.SelectedValue);
                     sql.Parameters.AddWithValue("@Month", ddlMonth.SelectedValue);
+                    sql.Parameters.AddWithValue("@SingleAmount", mrp);
 
                     sql.ExecuteNonQuery();
                 }
@@ -269,23 +271,24 @@ protected void btnSave_Click(object sender, EventArgs e)
                 foreach (string empcode in normalEmpCodes)
                 {
                     SqlCommand sql = new SqlCommand(
-                        "INSERT INTO Commission(EmpCode, Amount, CommissionAmount, CommissionDate, CreatedDate, sinleamount) " +
-                        "VALUES(@EmpCode, @Amount, @CommissionAmount, @CommissionDate, DATEFROMPARTS(@Year,@Month,1), @Mrp)",
-                        con);
+     "INSERT INTO Commission(id, EmpCode, Amount, CommissionAmount, CommissionDate, CreatedDate, sinleamount) " +
+     "SELECT ISNULL(MAX(id),0)+1, @EmpCode, @Amount, @CommissionAmount, @CommissionDate, DATEFROMPARTS(@Year,@Month,1), @SingleAmount " +
+     "FROM Commission",
+     con);
 
                     sql.Parameters.AddWithValue("@EmpCode", empcode);
                     sql.Parameters.AddWithValue("@Amount", amount);
                     sql.Parameters.AddWithValue("@CommissionAmount", normalShare);
                     sql.Parameters.AddWithValue("@CommissionDate", createdDate);
-                    sql.Parameters.AddWithValue("@Mrp", mrp);
                     sql.Parameters.AddWithValue("@Year", ddlYear.SelectedValue);
                     sql.Parameters.AddWithValue("@Month", ddlMonth.SelectedValue);
+                    sql.Parameters.AddWithValue("@SingleAmount", mrp);
 
                     sql.ExecuteNonQuery();
                 }
             }
         }
-
+        Label1.Text = "✅ Commission Imported Successfully";
         Response.Write("✅ Commission Imported Successfully");
     }
     catch (Exception ex)

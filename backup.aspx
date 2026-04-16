@@ -54,6 +54,8 @@
                                 <asp:Button ID="btnBackup" runat="server" Text="Generate Insert Script"
     OnClick="btnBackup_Click" />
 
+                         <asp:Button ID="Button2" runat="server" Text="Send Mail"
+    OnClick="Button2_Click" />
 <asp:TextBox ID="txtOutput" runat="server" TextMode="MultiLine"
     Width="100%" Height="400px"></asp:TextBox>
                       

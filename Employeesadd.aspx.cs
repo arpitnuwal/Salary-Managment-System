@@ -36,7 +36,42 @@ public partial class Employeesadd : System.Web.UI.Page
         
         if (id == 0)
         {
-            cmd.CommandText = "INSERT INTO [emplist](empcode,empname,empsalary,esi,sundayamountgive,gender,rts,status,advanceamount,emptype,bankname,bankifsc,bankaccount,folder) VALUES('" + txtEmpCode.Text + "','" + txtEmpName.Text + "','" + txtEmpSalary.Text + "','" + esi + "','" + sundayamountgive + "','" + gender + "',getdate(),1,'" + txtadvance.Text + "','" + txtemptpye.Text + "','" + txtbankname.Text + "','" + txtifsc.Text + "','" + txtaccount.Text + "','"+txtfolder.Text+"')";
+            cmd.CommandText = @"
+    INSERT INTO [emplist]
+    (id, empcode, empname, empsalary, esi, sundayamountgive, gender, rts, status, advanceamount, emptype, bankname, bankifsc, bankaccount, folder)
+    SELECT
+        ISNULL(MAX(id), 0) + 1,
+        @EmpCode,
+        @EmpName,
+        @EmpSalary,
+        @Esi,
+        @SundayAmountGive,
+        @Gender,
+        GETDATE(),
+        1,
+        @AdvanceAmount,
+        @EmpType,
+        @BankName,
+        @BankIfsc,
+        @BankAccount,
+        @Folder
+    FROM [emplist]";
+
+            cmd.Parameters.Clear();
+            cmd.Parameters.AddWithValue("@EmpCode", txtEmpCode.Text);
+            cmd.Parameters.AddWithValue("@EmpName", txtEmpName.Text);
+            cmd.Parameters.AddWithValue("@EmpSalary", txtEmpSalary.Text);
+            cmd.Parameters.AddWithValue("@Esi", esi);
+            cmd.Parameters.AddWithValue("@SundayAmountGive", sundayamountgive);
+            cmd.Parameters.AddWithValue("@Gender", gender);
+            cmd.Parameters.AddWithValue("@AdvanceAmount", txtadvance.Text);
+            cmd.Parameters.AddWithValue("@EmpType", txtemptpye.Text);
+            cmd.Parameters.AddWithValue("@BankName", txtbankname.Text);
+            cmd.Parameters.AddWithValue("@BankIfsc", txtifsc.Text);
+            cmd.Parameters.AddWithValue("@BankAccount", txtaccount.Text);
+            cmd.Parameters.AddWithValue("@Folder", txtfolder.Text);
+
+           
         
 }
         else
@@ -113,6 +148,8 @@ public partial class Employeesadd : System.Web.UI.Page
 
         lvEmployees.DataSource = dt;
         lvEmployees.DataBind();
+
+        lblCount.Text = dt.Rows.Count.ToString();
     }
 
     // CLEAR FORM
