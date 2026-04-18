@@ -46,8 +46,7 @@ public partial class Printslip : System.Web.UI.Page
 
         lblmmonthname.Text = dt.Rows[0]["reportmonth"].ToString();
 
-        lblesi.Text = dt.Rows[0]["esicut"].ToString();
-
+        lblesi.Text = Math.Round(Convert.ToDecimal(dt.Rows[0]["esicut"]), 0).ToString();
       
 
       //  lblnetsalary2.Text = dt.Rows[0]["NetSalary"].ToString();
@@ -72,7 +71,13 @@ public partial class Printslip : System.Web.UI.Page
 
         lblyearname.Text = dt.Rows[0]["reportyear"].ToString();
 
-        lbltotaldesduct.Text=(Convert.ToInt32(lbladvacneamt.Text)+Convert.ToInt32(lblsalaryadv.Text)+Convert.ToInt32(lblesi.Text)).ToString();
+        int adv = 0, saladv = 0, esi = 0;
+
+        int.TryParse(lbladvacneamt.Text, out adv);
+        int.TryParse(lblsalaryadv.Text, out saladv);
+        int.TryParse(lblesi.Text, out esi);
+
+        lbltotaldesduct.Text = (adv + saladv + esi).ToString();
         lblnetsalary.Text = (Convert.ToInt32(lblgrosssalary.Text) - Convert.ToInt32(lbltotaldesduct.Text)).ToString();
     }
 }

@@ -262,7 +262,7 @@ public partial class _Default : System.Web.UI.Page
               @Deduction,
               @DeductionType,
               @Reason,
-              DATEFROMPARTS(@Year, @Month, 1)
+              CONVERT(DATETIME,CAST(@Year AS VARCHAR(4)) + '-' + RIGHT('0' + CAST(@Month AS VARCHAR(2)), 2) + '-01')
           FROM AttendanceDeductionLog",
                                 conInsert);
 
@@ -423,7 +423,7 @@ public partial class _Default : System.Web.UI.Page
               @InTime,
               @OutTime,
               @BreakTime,
-              DATEFROMPARTS(@Year, @Month, 1),
+             CONVERT(DATETIME,CAST(@Year AS VARCHAR(4)) + '-' + RIGHT('0' + CAST(@Month AS VARCHAR(2)), 2) + '-01'),
               @Remark
           FROM SundayAttendanceLog",
                                 conSunday);
@@ -488,7 +488,7 @@ public partial class _Default : System.Web.UI.Page
                                     SqlCommand cmdextra = new SqlCommand(
      "INSERT INTO AttendanceDeductionLog " +
      "(id, EmpCode, AttDate, InTime, OutTime, BreakTime, Deduction, DeductionType, Reason, CreatedOn) " +
-     "SELECT ISNULL(MAX(id),0) + 1, @EmpCode, @AttDate, @InTime, @OutTime, @BreakTime, @Deduction, @DeductionType, @Reason, DATEFROMPARTS(@Year,@Month,1) " +
+     "SELECT ISNULL(MAX(id),0) + 1, @EmpCode, @AttDate, @InTime, @OutTime, @BreakTime, @Deduction, @DeductionType, @Reason, CONVERT(DATETIME,CAST(@Year AS VARCHAR(4)) + '-' + RIGHT('0' + CAST(@Month AS VARCHAR(2)), 2) + '-01') " +
      "FROM AttendanceDeductionLog",
      conInsert);
 
@@ -533,7 +533,7 @@ public partial class _Default : System.Web.UI.Page
               @InTime,
               @OutTime,
               @BreakTime,
-              DATEFROMPARTS(@Year, @Month, 1),
+              CONVERT(DATETIME,CAST(@Year AS VARCHAR(4)) + '-' + RIGHT('0' + CAST(@Month AS VARCHAR(2)), 2) + '-01'),
               @Remark
           FROM SundayAttendanceLog",
                                     conSunday);
@@ -745,7 +745,7 @@ public partial class _Default : System.Web.UI.Page
                     {
                         conInsert.Open();
 
-                        SqlCommand commissioncmdgtdailyexcute = new SqlCommand("insert into commsioncut values ('" + empCode + "','" + chkdate + "','" + Convert.ToInt32(commissiondailytesrt) + "','" + inTime + "', DATEFROMPARTS(" + ddlYear.SelectedValue + "," + ddlMonth.SelectedValue + ",1))", conInsert);
+                        SqlCommand commissioncmdgtdailyexcute = new SqlCommand("insert into commsioncut values ('" + empCode + "','" + chkdate + "','" + Convert.ToInt32(commissiondailytesrt) + "','" + inTime + "', CONVERT(DATETIME,CAST(" + ddlYear.SelectedValue + " AS VARCHAR(4)) + '-' + RIGHT('0' + CAST(" + ddlMonth.SelectedValue + " AS VARCHAR(2)), 2) + '-01'))", conInsert);
                         commissioncmdgtdailyexcute.ExecuteNonQuery();
                         conInsert.Close();
                     }
@@ -813,7 +813,7 @@ public partial class _Default : System.Web.UI.Page
                         SqlCommand cmdextra = new SqlCommand(
       "INSERT INTO AttendanceDeductionLog " +
       "(id, EmpCode, AttDate, InTime, OutTime, BreakTime, Deduction, DeductionType, Reason, CreatedOn) " +
-      "SELECT ISNULL(MAX(id), 0) + 1, @EmpCode, @AttDate, @InTime, @OutTime, @BreakTime, @Deduction, @DeductionType, @Reason, DATEFROMPARTS(@Year, @Month, 1) " +
+      "SELECT ISNULL(MAX(id), 0) + 1, @EmpCode, @AttDate, @InTime, @OutTime, @BreakTime, @Deduction, @DeductionType, @Reason, CONVERT(DATETIME,CAST(@Year AS VARCHAR(4)) + '-' + RIGHT('0' + CAST(@Month AS VARCHAR(2)), 2) + '-01')" +
       "FROM AttendanceDeductionLog",
       conInsert);
 
@@ -977,7 +977,7 @@ public partial class _Default : System.Web.UI.Page
                 if (Convert.ToInt32(esiCut) > 0)
                 {
                     esiCutnew = grosssalarycheck * 0.0075; // 0.25%
-                    finalSalarycheck = grosssalarycheck - esiCut;
+                    finalSalarycheck = grosssalarycheck - esiCutnew;
                 }
                 else
                 {
@@ -988,13 +988,26 @@ public partial class _Default : System.Web.UI.Page
 
                 finalSalarycheck = finalSalarycheck - lessamount;
 
-                dueAdvance = dueAdvance - advance;
+              
 
 
                 SqlCommand updateanddelete = new SqlCommand(@"BEGIN TRANSACTION; UPDATE emplist SET advanceamount = ISNULL(advanceamount, 0) + ( SELECT ISNULL(SUM(advanceamountcut), 0)   FROM finalsalaryreport     WHERE empcode = '" + empCode + "'  AND reportmonth = '" + monthName + "'       AND reportyear = '" + year + "' ) WHERE empcode = '" + empCode + "'; DELETE FROM finalsalaryreport WHERE empcode = '" + empCode + "'   AND reportmonth = '" + monthName + "'   AND reportyear =  '" + year + "';  COMMIT TRANSACTION; ", con);
 
                 updateanddelete.ExecuteNonQuery();
 
+                SqlCommand selectamt = new SqlCommand("select advanceamount from emplist  where empcode='" + empCode + "'", con);
+                int chechadamt = Convert.ToInt32(selectamt.ExecuteScalar());
+                int cadvan = Convert.ToInt32(advance);
+                int lastamt = chechadamt - cadvan;
+
+                SqlCommand cmdadv = new SqlCommand(
+     "UPDATE emplist SET advanceamount ='" + lastamt + "' WHERE empcode = @empcode",
+     con);
+
+
+                cmdadv.Parameters.AddWithValue("@empcode", empCode);
+
+                cmdadv.ExecuteNonQuery();
 
 
 
@@ -1034,7 +1047,7 @@ public partial class _Default : System.Web.UI.Page
                 cmd.Parameters.AddWithValue("@grosssalary", grosssalarycheck);
                 cmd.Parameters.AddWithValue("@Commission", commission);
                 cmd.Parameters.AddWithValue("@advanceamountcut", advance);
-                cmd.Parameters.AddWithValue("@dueadvance", dueAdvance);
+                cmd.Parameters.AddWithValue("@dueadvance", lastamt);
                 cmd.Parameters.AddWithValue("@NetSalary", finalSalarycheck);
                 cmd.Parameters.AddWithValue("@reportmonth", monthName);
                 cmd.Parameters.AddWithValue("@reportyear", year);
@@ -1042,13 +1055,12 @@ public partial class _Default : System.Web.UI.Page
                 cmd.Parameters.AddWithValue("@basicsalary", Litbasicsalary);
 
                 cmd.ExecuteNonQuery();
+
+
+
+
+             
                
-              
-            
-
-
-                SqlCommand cmdadv = new SqlCommand("update emplist set advanceamount=advanceamount-" + advance + " where empcode='" + empCode + "'", con);
-                cmdadv.ExecuteNonQuery();
             }
 
             lblMessage.Text = "Salaries saved successfully!";

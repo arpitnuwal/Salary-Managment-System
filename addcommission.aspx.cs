@@ -252,7 +252,7 @@ protected void btnSave_Click(object sender, EventArgs e)
                 {
                     SqlCommand sql = new SqlCommand(
       "INSERT INTO Commission(id, EmpCode, Amount, CommissionAmount, CommissionDate, CreatedDate, sinleamount) " +
-      "SELECT ISNULL(MAX(id),0)+1, @EmpCode, @Amount, @CommissionAmount, @CommissionDate, DATEFROMPARTS(@Year,@Month,1), @SingleAmount " +
+      "SELECT ISNULL(MAX(id),0)+1, @EmpCode, @Amount, @CommissionAmount, @CommissionDate, CONVERT(DATETIME,CAST(@Year AS VARCHAR(4)) + '-' + RIGHT('0' + CAST(@Month AS VARCHAR(2)), 2) + '-01'), @SingleAmount " +
       "FROM Commission",
       con);
 
@@ -272,8 +272,7 @@ protected void btnSave_Click(object sender, EventArgs e)
                 {
                     SqlCommand sql = new SqlCommand(
      "INSERT INTO Commission(id, EmpCode, Amount, CommissionAmount, CommissionDate, CreatedDate, sinleamount) " +
-     "SELECT ISNULL(MAX(id),0)+1, @EmpCode, @Amount, @CommissionAmount, @CommissionDate, DATEFROMPARTS(@Year,@Month,1), @SingleAmount " +
-     "FROM Commission",
+     "SELECT ISNULL(MAX(id),0)+1, @EmpCode, @Amount, @CommissionAmount, @CommissionDate, CONVERT(DATETIME,CAST(@Year AS VARCHAR(4)) + '-' + RIGHT('0' + CAST(@Month AS VARCHAR(2)), 2) + '-01'), @SingleAmount " +   "FROM Commission",
      con);
 
                     sql.Parameters.AddWithValue("@EmpCode", empcode);

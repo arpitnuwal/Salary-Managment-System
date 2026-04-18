@@ -202,7 +202,9 @@ protected void btnSave_Click(object sender, EventArgs e)
           @InTime,
           @OutTime,
           @BreakTime,
-          DATEFROMPARTS(@Year, @Month, 1)
+          CONVERT(DATETIME,
+        CAST(@Year AS VARCHAR(4)) + '-' +
+        RIGHT('0' + CAST(@Month AS VARCHAR(2)), 2) + '-01')
       FROM Attendance", sql);
 
                     insertCmd.Parameters.AddWithValue("@EmpCode", currentEmpCode);
