@@ -1,2 +1,3 @@
 ✔ Fix auth bug - 2026-04-21T11:15:18.293Z
 ✔ Add validation - 2026-04-21T11:15:22.432Z
+✔ Update README - 2026-04-21T11:15:25.868Z
