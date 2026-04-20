@@ -20,7 +20,7 @@
             window.print();
             document.body.innerHTML = originalContent;
             location.reload();
-            //
+           
         }
     </script>
    <div style="border:1px solid #000;" id="printArea">
@@ -31,9 +31,9 @@
         <h2 style="margin:5px 0 0; font-size:28px;">
             Salary Pay Slip For The Month Of <asp:Label ID="lblmmonthname" runat="server" Text="Label"></asp:Label>  <asp:Label ID="lblyearname" runat="server" Text="Label"></asp:Label> 
         </h2>
-    </div>
+    </div> 
 
-    <!-- Date -->
+    <!-- Date .-->
     <div style="text-align:right; padding:5px 20px; border-bottom:1px solid #000; font-size:20px;">
      DATE : <b><%= DateTime.Now.ToString("dd-MM-yyyy") %></b>
     </div>
