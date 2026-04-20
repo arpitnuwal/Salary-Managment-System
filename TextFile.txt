@@ -1,4 +1,54 @@
-﻿select a.*,(select emptype from emplist where empcode=a.empcode) as emptype,(select bankname from emplist where empcode=a.empcode) as bankname,
-(select bankifsc from emplist where empcode=a.empcode) as bankifsc
-,(select bankaccount from emplist where empcode=a.empcode) as bankaccount from finalsalaryreport   
-as a  where a.reportmonth='Mar' and	a.reportyear='2026' and a.empcode in (select empcode from  emplist wh
+﻿const fs = require("fs");
+const path = require("path");
+const { execSync } = require("child_process");
+const readline = require("readline");
+
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+});
+
+function askQuestion(question, defaultValue) {
+    return new Promise((resolve) => {
+        rl.question(`${question} (default ${defaultValue}): `, (answer) => {
+            resolve(answer.trim() || defaultValue);
+        });
+    });
+}
+
+function makeCommit(repoPath, filename, message = "daily commit") {
+    const filePath = path.join(repoPath, filename);
+
+    // File update
+    fs.appendFileSync(filePath, `Commit at ${new Date().toISOString()}\n`);
+
+    // Git add & commit
+    execSync(`git add ${filename}`, { cwd: repoPath, stdio: "inherit" });
+    execSync(`git commit -m "${message}"`, { cwd: repoPath, stdio: "inherit" });
+}
+
+async function main() {
+    console.log("=".repeat(60));
+    console.log("🌱 GitHub Current Contribution Generator 🌱");
+    console.log("=".repeat(60));
+
+    const numCommits = parseInt(await askQuestion("How many commits do you want to make", "20"));
+    const repoPath = await askQuestion("Enter your local git repo path", ".");
+    const filename = await askQuestion("Enter file name", "data.txt");
+
+    console.log(`\nMaking ${numCommits} commits...\n`);
+
+    for (let i = 0; i < numCommits; i++) {
+        console.log(`[${i + 1}/${numCommits}] Committing...`);
+        makeCommit(repoPath, filename);
+    }
+
+    console.log("\nPushing commits...");
+    execSync("git push", { cwd: repoPath, stdio: "inherit" });
+
+    console.log("✅ Done! GitHub contribution green ho jayega 😄");
+
+    rl.close();
+}
+
+main();
