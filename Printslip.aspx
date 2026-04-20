@@ -20,6 +20,7 @@
             window.print();
             document.body.innerHTML = originalContent;
             location.reload();
+            //
         }
     </script>
    <div style="border:1px solid #000;" id="printArea">
