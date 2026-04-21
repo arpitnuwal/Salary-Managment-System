@@ -8,43 +8,54 @@ const rl = readline.createInterface({
     output: process.stdout
 });
 
-// Better commit messages (realistic)
+// Realistic commit messages
 const messages = [
-    "feat: added new feature",
-    "fix: resolved bug",
-    "docs: updated documentation",
-    "refactor: improved code structure",
-    "style: formatting changes",
-    "perf: performance improved",
-    "test: added test cases",
-    "chore: minor maintenance",
+    "feat: add new feature",
+    "fix: resolve issue",
+    "docs: update docs",
+    "refactor: improve code",
+    "style: formatting",
+    "perf: optimize performance",
+    "test: add tests",
+    "chore: cleanup"
 ];
 
-// Task content generator
+// Realistic tasks
 const tasks = [
-    "Improve UI layout",
-    "Fix login issue",
-    "Optimize API call",
-    "Refactor function logic",
+    "Improve UI",
+    "Fix auth bug",
+    "Optimize API",
+    "Refactor logic",
     "Add validation",
     "Update README",
-    "Enhance responsiveness"
+    "Enhance UX"
 ];
 
-// Utility: random item
+// Random item
 function randomItem(arr) {
     return arr[Math.floor(Math.random() * arr.length)];
 }
 
-// Utility: delay
+// Delay
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// Generate random past date
-function getRandomDate(daysBack = 30) {
+// 🔥 SMART DATE (spread across days + random time)
+function getSmartDate(index, totalDays = 120) {
     const date = new Date();
-    date.setDate(date.getDate() - Math.floor(Math.random() * daysBack));
+
+    // Spread commits across past days
+    const dayOffset = Math.floor((index / totalDays) * totalDays);
+    date.setDate(date.getDate() - dayOffset);
+
+    // Random time in day
+    date.setHours(
+        Math.floor(Math.random() * 24),
+        Math.floor(Math.random() * 60),
+        Math.floor(Math.random() * 60)
+    );
+
     return date.toISOString();
 }
 
@@ -58,11 +69,11 @@ function ask(question, def) {
 }
 
 // Make commit
-function makeCommit(repoPath, useEmptyCommit) {
-    const commitMessage = randomItem(messages);
-    const randomDate = getRandomDate();
+function makeCommit(repoPath, index, useEmptyCommit) {
+    const message = randomItem(messages);
+    const commitDate = getSmartDate(index);
 
-    console.log(`📝 ${commitMessage} | 📅 ${randomDate}`);
+    console.log(`📝 ${message} | 📅 ${commitDate}`);
 
     if (!useEmptyCommit) {
         const file = path.join(repoPath, "activity.txt");
@@ -74,35 +85,36 @@ function makeCommit(repoPath, useEmptyCommit) {
     }
 
     execSync(
-        `git commit ${useEmptyCommit ? "--allow-empty" : ""} --date="${randomDate}" -m "${commitMessage}"`,
+        `git commit ${useEmptyCommit ? "--allow-empty" : ""} --date="${commitDate}" -m "${message}"`,
         { cwd: repoPath, stdio: "inherit" }
     );
 }
 
-// Main function
+// Main
 async function main() {
     console.log("=".repeat(50));
-    console.log("🚀 Smart GitHub Contribution Script");
+    console.log("🚀 Smart Contribution Generator v2");
     console.log("=".repeat(50));
 
-    const totalCommits = parseInt(await ask("Total commits", "15"));
+    const totalCommits = parseInt(await ask("Total commits", "100"));
     const repoPath = await ask("Repo path", ".");
-    const useEmpty = (await ask("Use empty commits? (yes/no)", "no")) === "yes";
+    const useEmpty = (await ask("Empty commits? (yes/no)", "no")) === "yes";
 
-    console.log("\n⚡ Starting commits...\n");
+    console.log("\n⚡ Generating commits...\n");
 
     for (let i = 0; i < totalCommits; i++) {
         console.log(`➡️ Commit ${i + 1}/${totalCommits}`);
-        makeCommit(repoPath, useEmpty);
 
-        // random delay (1–3 sec)
-        await sleep(Math.floor(Math.random() * 2000) + 1000);
+        makeCommit(repoPath, i, useEmpty);
+
+        // 🔥 random delay (2–6 sec)
+        await sleep(Math.floor(Math.random() * 4000) + 2000);
     }
 
-    console.log("\n🚀 Pushing to GitHub...");
+    console.log("\n🚀 Pushing...");
     execSync("git push", { cwd: repoPath, stdio: "inherit" });
 
-    console.log("✅ Done! Your contributions updated 😎");
+    console.log("✅ Done! Check GitHub after 10–20 min 😎");
 
     rl.close();
 }
